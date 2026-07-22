@@ -1,0 +1,28 @@
+{
+  "purpose": "This file defines the bucket deliberately withheld from taxonomy.json. Do NOT expose this file to the classification or curator agent prompts. It exists only for grading the leave-one-out eval - i.e. checking whether the curator agent independently rediscovers this bucket from unclassified items alone.",
+
+  "withheld_bucket_id": "metabolic_vascular",
+
+  "ground_truth_definition": {
+    "description": "Agents targeting metabolic dysregulation (insulin resistance, glucose metabolism) or vascular/cerebral blood flow contributions to AD",
+    "pubmed_query": "(GLP-1[tiab] OR \"insulin resistance\"[tiab] OR \"cerebral blood flow\"[tiab] OR \"vascular dementia\"[tiab]) AND Alzheimer[tiab]",
+    "trial_keywords": ["GLP-1 agonist", "intranasal insulin", "vascular", "cerebral perfusion"],
+    "preclinical_terms": ["insulin signaling brain", "BBB integrity", "cerebral perfusion"],
+    "representative_agents": ["semaglutide", "cilostazol", "intranasal insulin"]
+  },
+
+  "eval_protocol": {
+    "test_mode": "backfill_replay",
+    "description": "Run the historical trials backfill (all ~3,400 AD trials) through the classification prompt using taxonomy.json WITH metabolic_vascular omitted. Every trial whose ground-truth mechanism is metabolic/vascular should land in the unclassified bucket. Then run the curator agent's weekly aggregation step against that backfilled unclassified set and check its output.",
+    "pass_criteria": [
+      "Curator agent proposes a new bucket whose description substantially overlaps with ground_truth_definition.description (semantic match, not exact wording)",
+      "Proposed representative_agents overlaps with ground_truth_definition.representative_agents by at least 2 of 3 agents",
+      "Recurrence threshold (see curator_agent_prompt.md) is met using only the unclassified items - i.e. discovery happens without being told the answer"
+    ],
+    "fail_modes_to_watch_for": [
+      "Curator proposes several fragmented micro-buckets (e.g. separate 'GLP-1' and 'vascular' buckets) instead of one coherent bucket - suggests recurrence clustering is too literal/keyword-based rather than semantic",
+      "Curator fails to flag anything because individual metabolic/vascular trials get force-fit into an existing bucket (e.g. 'synaptic_neurotransmitter') by the classifier instead of falling to unclassified - suggests the classification prompt's confidence threshold is too permissive",
+      "No proposal at all after the full backfill - suggests recurrence threshold is miscalibrated for this bucket's actual volume"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+# Secrets - never commit these
+.env
+*.key
+
+# SQLite database - excluded by default per README setup note.
+# Remove this line if you decide to commit the db itself instead.
+*.db
+*.sqlite
+*.sqlite3
+
+# Common Python/Node clutter if Claude Code adds either
+__pycache__/
+*.pyc
+node_modules/
+.venv/

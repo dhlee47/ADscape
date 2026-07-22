@@ -1,0 +1,62 @@
+{
+  "version": "0.1.0",
+  "notes": "metabolic_vascular is deliberately omitted from this file for the leave-one-out taxonomy-discovery eval. See holdout_eval.json for its full definition and grading criteria.",
+  "buckets": {
+    "anti_amyloid_immunotherapy": {
+      "description": "Monoclonal antibodies and immunotherapies targeting amyloid-beta for clearance",
+      "pubmed_query": "(\"amyloid beta\"[tiab] OR \"amyloid beta\"[MeSH Terms]) AND (antibody[tiab] OR immunotherapy[tiab] OR \"monoclonal antibody\"[tiab])",
+      "trial_keywords": ["monoclonal antibody", "amyloid", "A\u03b2", "anti-amyloid"],
+      "preclinical_terms": ["amyloid plaque", "A\u03b2 clearance", "immunotherapy mouse model"],
+      "representative_agents": ["lecanemab", "donanemab", "aducanumab", "gantenerumab", "solanezumab", "bapineuzumab"]
+    },
+    "amyloid_production": {
+      "description": "Agents targeting amyloid precursor protein processing enzymes (secretase pathway)",
+      "pubmed_query": "(\"BACE1\"[tiab] OR \"beta secretase\"[tiab] OR \"gamma secretase\"[tiab]) AND Alzheimer[tiab]",
+      "trial_keywords": ["BACE inhibitor", "secretase inhibitor"],
+      "preclinical_terms": ["APP processing", "secretase cleavage"],
+      "representative_agents": ["verubecestat", "atabecestat", "lanabecestat"]
+    },
+    "tau_targeted": {
+      "description": "Antibodies, ASOs, and small molecules targeting tau pathology",
+      "pubmed_query": "tau[tiab] AND (antibody[tiab] OR aggregation[tiab] OR phosphorylation[tiab] OR \"antisense oligonucleotide\"[tiab]) AND Alzheimer[tiab]",
+      "trial_keywords": ["anti-tau", "tau antibody", "tau ASO"],
+      "preclinical_terms": ["tauopathy", "neurofibrillary tangle", "tau spreading"],
+      "representative_agents": ["semorinemab", "gosuranemab", "tilavonemab", "E2814", "hydromethylthionine", "BIIB080"]
+    },
+    "neuroinflammation_microglia_complement": {
+      "description": "Agents modulating microglial activation, complement cascade, or innate immune signaling",
+      "pubmed_query": "(microglia[tiab] OR neuroinflammation[tiab] OR TREM2[tiab] OR complement[tiab] OR NLRP3[tiab]) AND Alzheimer[tiab]",
+      "trial_keywords": ["TREM2 agonist", "complement inhibitor", "anti-inflammatory", "microglial modulator"],
+      "preclinical_terms": ["microglial activation", "complement cascade", "NLRP3 inflammasome"],
+      "representative_agents": ["AL002", "DNL919"]
+    },
+    "apoe_lipid_metabolism": {
+      "description": "APOE-targeted and lipid/cholesterol metabolism modulators",
+      "pubmed_query": "APOE[tiab] AND (lipid[tiab] OR cholesterol[tiab] OR \"gene therapy\"[tiab]) AND Alzheimer[tiab]",
+      "trial_keywords": ["APOE gene therapy", "lipid modulator"],
+      "preclinical_terms": ["APOE4", "lipid droplet", "cholesterol metabolism astrocyte"],
+      "representative_agents": ["LX1001"]
+    },
+    "synaptic_neurotransmitter": {
+      "description": "Symptomatic and synaptic-density-targeted agents affecting neurotransmission",
+      "pubmed_query": "(\"synaptic density\"[tiab] OR cholinergic[tiab] OR NMDA[tiab] OR acetylcholinesterase[tiab]) AND Alzheimer[tiab]",
+      "trial_keywords": ["cholinesterase inhibitor", "NMDA antagonist", "synaptic modulator"],
+      "preclinical_terms": ["synaptic loss", "long-term potentiation", "dendritic spine"],
+      "representative_agents": ["donepezil", "memantine"]
+    },
+    "regenerative_neurotrophic": {
+      "description": "Neurotrophic factor and regenerative/stem-cell approaches",
+      "pubmed_query": "(NGF[tiab] OR BDNF[tiab] OR neurotrophic[tiab] OR \"stem cell\"[tiab]) AND Alzheimer[tiab]",
+      "trial_keywords": ["gene therapy NGF", "stem cell therapy"],
+      "preclinical_terms": ["neurotrophic signaling", "neurogenesis"],
+      "representative_agents": []
+    },
+    "unclassified": {
+      "description": "Catch-all for items that do not match any defined bucket. Not a real mechanism category - this is the routing target for the curator agent's taxonomy-discovery review.",
+      "pubmed_query": null,
+      "trial_keywords": [],
+      "preclinical_terms": [],
+      "representative_agents": []
+    }
+  }
+}
