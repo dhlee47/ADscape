@@ -1,0 +1,303 @@
+{
+  "recent_runs": [
+    {
+      "run_type": "backfill",
+      "started_at": "2026-07-22 07:09:32",
+      "completed_at": "2026-07-22 07:09:42",
+      "status": "success",
+      "records_fetched": 4227,
+      "records_upserted": 4227,
+      "error_message": null
+    }
+  ],
+  "classified_count": 4227,
+  "unclassified_count": 0,
+  "pending_proposals": [],
+  "low_confidence": [
+    {
+      "nct_id": "NCT00959881",
+      "brief_title": "Study Evaluating The Coadministration of Begacestat And Donepezil",
+      "bucket_id": "unclassified",
+      "classification_confidence": 0.4,
+      "classification_rationale": "Begacestat is a BACE inhibitor (amyloid production mechanism), but trial focuses on drug-drug interaction safety in healthy subjects, not AD efficacy. [candidate_entity: begacestat]",
+      "bucket_label": "Unclassified"
+    },
+    {
+      "nct_id": "NCT04983368",
+      "brief_title": "A Double-Blind, Placebo-Controlled, Dose Ranging Study of Xanamem\u00ae in Healthy Elderly Volunteers",
+      "bucket_id": "unclassified",
+      "classification_confidence": 0.4,
+      "classification_rationale": "Xanamem mechanism not specified in abstract; insufficient detail to assign to specific bucket. [candidate_entity: Xanamem]",
+      "bucket_label": "Unclassified"
+    },
+    {
+      "nct_id": "NCT00110552",
+      "brief_title": "Effects of Sage on Memory and Mental Performance in Alzheimer's Disease Patients",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.4,
+      "classification_rationale": "Sage (Salvia officinalis) is a cognitive enhancer with potential cholinergic activity, but mechanism remains unclear and poorly characterized in AD research.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00423228",
+      "brief_title": "Efficacy Study of a ZT-1 Implant in Patients Suffering From Alzheimer's Disease",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.45,
+      "classification_rationale": "ZT-1 mechanism unclear; trial compares implant to donepezil but ZT-1's target mechanism is not disclosed in summary.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT07142278",
+      "brief_title": "DUVAX: A Phase 1 Alzheimer's Vaccine Study Targeting Amyloid-Beta and Tau",
+      "bucket_id": "unclassified",
+      "classification_confidence": 0.45,
+      "classification_rationale": "DUVAX is a dual-target vaccine against both amyloid-beta and tau; no single bucket accommodates combinatorial immunotherapy targeting both pathologies simultaneously. [candidate_entity: DUVAX]",
+      "bucket_label": "Unclassified"
+    },
+    {
+      "nct_id": "NCT01428453",
+      "brief_title": "A Phase 2a Study to Evaluate the Effect of Rilapladib (SB-659032) in Alzheimer's Disease",
+      "bucket_id": "unclassified",
+      "classification_confidence": 0.45,
+      "classification_rationale": "Rilapladib is a lipoprotein-associated phospholipase A2 inhibitor; mechanism does not match any defined taxonomy bucket. [candidate_entity: rilapladib (SB-659032)]",
+      "bucket_label": "Unclassified"
+    },
+    {
+      "nct_id": "NCT02860065",
+      "brief_title": "CPC-201 Alzheimer's Disease Type Dementia: PET Study",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.45,
+      "classification_rationale": "CPC-201 mechanism unclear; trial primary outcome is donepezil MTD, a symptomatic cholinesterase inhibitor, but CPC-201's own target undefined.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00438568",
+      "brief_title": "SNIFF 120: Study of Nasal Insulin to Fight Forgetfulness (120 Days)",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.6,
+      "classification_rationale": "Intranasal insulin appears to work via metabolic/synaptic mechanisms rather than amyloid/tau/inflammation pathways, but mechanism is not well-characterized mechanistically.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT01172145",
+      "brief_title": "Treatment of Apathy in Alzheimer's Disease With Modafinil",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.6,
+      "classification_rationale": "Modafinil is a symptomatic agent affecting wakefulness and neurotransmission, but apathy treatment is peripheral to core AD mechanisms.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00000179",
+      "brief_title": "Agitation in Alzheimer's Disease",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.6,
+      "classification_rationale": "Trazodone and haloperidol are symptomatic agents affecting neurotransmission, though neither is disease-modifying.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00990613",
+      "brief_title": "A Study Evaluating The Absorption Of Dimebon Into The Body From A Dimebon Solution Applied To The Skin",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.6,
+      "classification_rationale": "Dimebon (latrepirdine) has multi-target neuroprotective properties including mitochondrial and synaptic effects, best fitting symptomatic/synaptic category despite broader mechanism.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT04901494",
+      "brief_title": "SSRI's and the Rate of Progression From MCI to Dementia",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.6,
+      "classification_rationale": "SSRIs modulate neurotransmission; mechanism fits symptomatic/neurotransmitter category, though indirect compared to primary AD pathways.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00702780",
+      "brief_title": "Progression Delaying Effect of Escitalopram in Alzheimer's Disease",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.6,
+      "classification_rationale": "Escitalopram is an SSRI affecting serotonin neurotransmission; symptomatically relevant but not disease-modifying.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00001933",
+      "brief_title": "Nefiracetam in the Treatment of Alzheimer's Disease",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.6,
+      "classification_rationale": "Nefiracetam is a nootropic agent with symptomatic effects on cognition via membrane fluidity and neurotransmitter modulation, fitting synaptic mechanisms.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT05518409",
+      "brief_title": "Immunohistochemical Study of Neurodegenerative Diseases",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.6,
+      "classification_rationale": "Donepezil is the primary drug intervention; however, study is primarily an immunohistochemical mechanistic investigation rather than a donepezil efficacy trial.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT02210286",
+      "brief_title": "Magnesium L-Threonate for the Enhancement of Learning and Memory in People With Dementia",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.6,
+      "classification_rationale": "Magnesium L-Threonate targets synaptic plasticity and NMDA receptor function; fits synaptic mechanism though not core representative agent.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00825084",
+      "brief_title": "A Phase 1 Study To Evaluate The Pharmacokinetics, Safety, And Tolerability Of Dimebon [PF-01913539] In Japanese And Western Healthy Subjects",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Dimebon is a mitochondrial function modulator with putative neuroprotective and synaptic effects; mechanism not precisely fitting any bucket.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT01439555",
+      "brief_title": "Endothelial Facilitation in Alzheimer's Disease",
+      "bucket_id": "apoe_lipid_metabolism",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Simvastatin is a statin targeting cholesterol/lipid metabolism; L-Arginine and sapropterin target endothelial function and blood flow rather than core AD pathology mechanisms.",
+      "bucket_label": "APOE/lipid metabolism"
+    },
+    {
+      "nct_id": "NCT03594123",
+      "brief_title": "A 12-week Extension Trial to Evaluate the Safety and Tolerability of Brexpiprazole in the Treatment of Subjects With Agitation Associated With Dementia of the Alzheimer's Type",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Brexpiprazole is an atypical antipsychotic affecting dopamine/serotonin signaling; symptomatic agent for agitation management, not disease-modifying.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT02078310",
+      "brief_title": "Study of ITI-007 in Healthy Geriatric Volunteers and in Geriatric Patients With Dementia",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "ITI-007 is a serotonin-dopamine modulator affecting synaptic neurotransmission, matching symptomatic/synaptic agents, though primary outcome is safety rather than mechanism-focused efficacy.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT03108846",
+      "brief_title": "Escitalopram for Agitation in Alzheimer's Disease",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Escitalopram is an SSRI affecting serotonergic neurotransmission, closest to synaptic/neurotransmitter category despite being symptomatic rather than mechanism-targeted.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00495820",
+      "brief_title": "Methylphenidate for Apathy in Alzheimer's Dementia: A Controlled Study",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Methylphenidate is a sympathomimetic affecting dopamine/norepinephrine neurotransmission for symptomatic apathy management.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT03811847",
+      "brief_title": "A Pilot of Methylphenidate in Mild Cognitive Impairment and Dementia Participants.",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Methylphenidate is a sympathomimetic affecting dopamine/norepinephrine neurotransmission, aligning with synaptic mechanisms, though primarily symptomatic rather than disease-modifying.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00260624",
+      "brief_title": "Escitalopram Treatment of Patients With Agitated Dementia",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Escitalopram is an SSRI affecting serotonin neurotransmission; primarily symptomatic for behavioral management rather than disease-modifying.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT02198586",
+      "brief_title": "Apoe Impact Study on Brain Structure and Function, in a Population 45 to 75 Years Old",
+      "bucket_id": "apoe_lipid_metabolism",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Study focused on APOE impact on brain structure; mechanism appears APOE-related but intervention not explicitly stated.",
+      "bucket_label": "APOE/lipid metabolism"
+    },
+    {
+      "nct_id": "NCT00829816",
+      "brief_title": "Safety and Tolerability of Dimebon in Patients on Memantine, and Memantine Plus Donepezil",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Dimebon is a symptomatic agent affecting mitochondrial function and synaptic transmission; trial evaluates safety with memantine and donepezil.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00818662",
+      "brief_title": "A Phase 3 Study Evaluating Safety and Effectiveness of Immune Globulin Intravenous (IGIV 10%) for the Treatment of Mild-to-Moderate Alzheimer\u00b4s Disease",
+      "bucket_id": "neuroinflammation_microglia_complement",
+      "classification_confidence": 0.65,
+      "classification_rationale": "IGIV is a broad immunomodulatory agent; likely modulates complement and innate immunity, though mechanism in AD is not explicitly detailed.",
+      "bucket_label": "Neuroinflammation/microglia"
+    },
+    {
+      "nct_id": "NCT01066546",
+      "brief_title": "An Extension To The B1451006 Protocol To Evaluate The Safety and Efficacy of Dimebon In Subjects With Moderate-to-Severe Alzheimer's Disease",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Dimebon (latrepirdine) is a symptomatic agent with mitochondrial and neuroprotective properties, closest to synaptic support mechanisms.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00009204",
+      "brief_title": "Serotonergic Pharmacotherapy for Agitation of Dementia",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Citalopram is a serotonergic agent affecting neurotransmission, though trial focuses on symptom management rather than disease mechanism.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT01125683",
+      "brief_title": "To Evaluate Effects of AZD1446, Placebo and Donepezil in Patients With Alzheimer's Disease",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Donepezil comparator suggests synaptic mechanism, but AZD1446's specific target mechanism is unclear from abstract.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00013650",
+      "brief_title": "Effects of an Anti-Inflammatory Drug in Alzheimer's Disease",
+      "bucket_id": "neuroinflammation_microglia_complement",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Cyclophosphamate is an anti-inflammatory agent; mechanism aligns with neuroinflammation modulation, though specificity unclear.",
+      "bucket_label": "Neuroinflammation/microglia"
+    },
+    {
+      "nct_id": "NCT00303277",
+      "brief_title": "Do HMG CoA Reductase Inhibitors Affect Abeta Levels?",
+      "bucket_id": "amyloid_production",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Statins may indirectly reduce amyloid-beta production via lipid/cholesterol modulation, but mechanism is tangential to primary amyloid-focused buckets.",
+      "bucket_label": "Amyloid production (secretase)"
+    },
+    {
+      "nct_id": "NCT01841125",
+      "brief_title": "Escitalopram for the Treatment of Depression in Alzheimer's Disease",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Escitalopram is an SSRI affecting serotonin neurotransmission; addresses depression symptomatically rather than core AD pathology.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT02500784",
+      "brief_title": "Improving Beta-2 Adrenergic Signaling in Alzheimer's Disease",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Formoterol is a beta-2 adrenergic agonist affecting neurotransmission signaling; mechanism doesn't perfectly align with symptomatic agents but closest fit available.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    },
+    {
+      "nct_id": "NCT00073658",
+      "brief_title": "Treating Behavioral Disturbances in Individuals With Dementia",
+      "bucket_id": "synaptic_neurotransmitter",
+      "classification_confidence": 0.65,
+      "classification_rationale": "Citalopram (SSRI) and risperidone (antipsychotic) modulate neurotransmission for behavioral symptom management rather than target disease pathology.",
+      "bucket_label": "Synaptic/neurotransmitter"
+    }
+  ],
+  "watchlist": [],
+  "spot_check": {
+    "agreement_counts": {},
+    "log": []
+  }
+}

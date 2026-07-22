@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADscape — Landscape Overview</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1>ADscape</h1>
+  <nav>
+    <a href="landscape.html" class="active">Landscape</a>
+    <a href="ops.html">Pipeline Ops</a>
+  </nav>
+</header>
+<main>
+  <div class="stat-row" id="stat-row"></div>
+
+  <section class="card">
+    <h2>Trials by mechanism</h2>
+    <p class="subtitle">Includes "Unclassified" as its own bar — a growing unclassified count is a signal, not noise to hide.</p>
+    <div class="chart-wrap"><canvas id="chart-mechanism"></canvas></div>
+  </section>
+
+  <section class="card">
+    <h2>Trials by phase</h2>
+    <p class="subtitle">Combination phases (e.g. Phase 2/3) get their own category rather than being folded into one phase.</p>
+    <div class="chart-wrap"><canvas id="chart-phase"></canvas></div>
+  </section>
+
+  <section class="card">
+    <h2>New trials over time, by mechanism</h2>
+    <p class="subtitle">Grouped by trial start-date year. Watch for a mechanism climbing before it's been formally flagged.</p>
+    <div class="chart-wrap tall"><canvas id="chart-time"></canvas></div>
+  </section>
+
+  <section class="card">
+    <h2>Top lead sponsors</h2>
+    <p class="subtitle">Top 15 by number of led trials, with the mechanism bucket(s) each is active in.</p>
+    <div id="table-sponsors"></div>
+  </section>
+</main>
+<footer class="page-footer">Data as of last <code>generate_dashboard_data.py</code> run.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="common.js"></script>
+<script>
+(async function () {
+  const data = await loadJSON("data/landscape.json");
+  const fonts = chartFontDefaults();
+  Chart.defaults.color = fonts.color;
+  Chart.defaults.font.family = fonts.font.family;
+  Chart.defaults.font.size = fonts.font.size;
+  const grid = cssVar("--gridline");
+
+  // --- stat row ---
+  const statRow = document.getElementById("stat-row");
+  statRow.appendChild(el("div", { class: "stat-tile" }, [
+    el("div", { class: "value", text: fmtInt(data.total_trials) }),
+    el("div", { class: "label", text: "Total trials" }),
+  ]));
+  statRow.appendChild(el("div", { class: "stat-tile" }, [
+    el("div", { class: "value", text: fmtDateDisplay(data.last_sync) }),
+    el("div", { class: "label", text: "Last successful sync" }),
+  ]));
+  data.status_breakdown.slice(0, 4).forEach((s) => {
+    statRow.appendChild(el("div", { class: "stat-tile" }, [
+      el("div", { class: "value", text: fmtInt(s.count) }),
+      el("div", { class: "label", text: s.status }),
+    ]));
+  });
+
+  // --- trials by mechanism ---
+  const mech = data.by_mechanism;
+  new Chart(document.getElementById("chart-mechanism"), {
+    type: "bar",
+    data: {
+      labels: mech.map((m) => m.label),
+      datasets: [{
+        data: mech.map((m) => m.count),
+        backgroundColor: mech.map((m) => colorForBucket(m.bucket_id)),
+        borderRadius: 4,
+        maxBarThickness: 56,
+      }],
+    },
+    options: {
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${fmtInt(ctx.parsed.y)} trials` } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 40, minRotation: 20 } },
+        y: { beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
+      },
+    },
+  });
+
+  // --- trials by phase ---
+  const phase = data.by_phase;
+  new Chart(document.getElementById("chart-phase"), {
+    type: "bar",
+    data: {
+      labels: phase.map((p) => p.phase),
+      datasets: [{
+        data: phase.map((p) => p.count),
+        backgroundColor: colorForBucket("anti_amyloid_immunotherapy"),
+        borderRadius: 4,
+        maxBarThickness: 56,
+      }],
+    },
+    options: {
+      indexAxis: "y",
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${fmtInt(ctx.parsed.x)} trials` } } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
+        y: { grid: { display: false } },
+      },
+    },
+  });
+
+  // --- trials over time ---
+  const tot = data.trials_over_time;
+  new Chart(document.getElementById("chart-time"), {
+    type: "line",
+    data: {
+      labels: tot.years,
+      datasets: tot.series.map((s) => ({
+        label: s.label,
+        data: s.data,
+        borderColor: colorForBucket(s.bucket_id),
+        backgroundColor: colorForBucket(s.bucket_id),
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        tension: 0.15,
+      })),
+    },
+    options: {
+      interaction: { mode: "nearest", intersect: false },
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true } },
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
+      },
+    },
+  });
+
+  // --- top sponsors table ---
+  renderTable(
+    document.getElementById("table-sponsors"),
+    [
+      { key: "name", label: "Sponsor" },
+      { key: "count", label: "Led trials", num: true },
+      { key: "buckets", label: "Active mechanism buckets", render: (r) => r.buckets.join(", ") || "—" },
+    ],
+    data.top_sponsors,
+    "No sponsor data yet."
+  );
+})().catch((err) => {
+  document.querySelector("main").prepend(el("div", { class: "card empty-state", text: "Failed to load dashboard data: " + err.message }));
+});
+</script>
+</body>
+</html>

@@ -13,3 +13,6 @@ __pycache__/
 *.pyc
 node_modules/
 .venv/
+
+# Run logs from ingest.py/classify.py - regenerable, noisy, not source
+*.log

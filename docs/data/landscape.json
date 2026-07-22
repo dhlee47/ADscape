@@ -1,0 +1,653 @@
+{
+  "total_trials": 4227,
+  "last_sync": "2026-07-22 07:09:42",
+  "status_breakdown": [
+    {
+      "status": "COMPLETED",
+      "count": 2248
+    },
+    {
+      "status": "RECRUITING",
+      "count": 623
+    },
+    {
+      "status": "UNKNOWN",
+      "count": 483
+    },
+    {
+      "status": "TERMINATED",
+      "count": 316
+    },
+    {
+      "status": "NOT_YET_RECRUITING",
+      "count": 195
+    },
+    {
+      "status": "ACTIVE_NOT_RECRUITING",
+      "count": 168
+    },
+    {
+      "status": "WITHDRAWN",
+      "count": 104
+    },
+    {
+      "status": "ENROLLING_BY_INVITATION",
+      "count": 76
+    },
+    {
+      "status": "SUSPENDED",
+      "count": 8
+    },
+    {
+      "status": "NO_LONGER_AVAILABLE",
+      "count": 4
+    },
+    {
+      "status": "AVAILABLE",
+      "count": 2
+    }
+  ],
+  "by_mechanism": [
+    {
+      "bucket_id": "unclassified",
+      "label": "Unclassified",
+      "count": 3484
+    },
+    {
+      "bucket_id": "synaptic_neurotransmitter",
+      "label": "Synaptic/neurotransmitter",
+      "count": 334
+    },
+    {
+      "bucket_id": "anti_amyloid_immunotherapy",
+      "label": "Anti-amyloid immunotherapy",
+      "count": 155
+    },
+    {
+      "bucket_id": "amyloid_production",
+      "label": "Amyloid production (secretase)",
+      "count": 72
+    },
+    {
+      "bucket_id": "neuroinflammation_microglia_complement",
+      "label": "Neuroinflammation/microglia",
+      "count": 60
+    },
+    {
+      "bucket_id": "regenerative_neurotrophic",
+      "label": "Regenerative/neurotrophic",
+      "count": 53
+    },
+    {
+      "bucket_id": "tau_targeted",
+      "label": "Tau-targeted",
+      "count": 39
+    },
+    {
+      "bucket_id": "apoe_lipid_metabolism",
+      "label": "APOE/lipid metabolism",
+      "count": 30
+    }
+  ],
+  "by_phase": [
+    {
+      "phase": "N/A",
+      "count": 1558
+    },
+    {
+      "phase": "Not specified",
+      "count": 888
+    },
+    {
+      "phase": "Phase 2",
+      "count": 591
+    },
+    {
+      "phase": "Phase 1",
+      "count": 488
+    },
+    {
+      "phase": "Phase 3",
+      "count": 316
+    },
+    {
+      "phase": "Phase 4",
+      "count": 142
+    },
+    {
+      "phase": "Phase 1/Phase 2",
+      "count": 110
+    },
+    {
+      "phase": "Early Phase 1",
+      "count": 67
+    },
+    {
+      "phase": "Phase 2/Phase 3",
+      "count": 67
+    }
+  ],
+  "trials_over_time": {
+    "years": [
+      "1981",
+      "1988",
+      "1994",
+      "1995",
+      "1996",
+      "1997",
+      "1998",
+      "1999",
+      "2000",
+      "2001",
+      "2002",
+      "2003",
+      "2004",
+      "2005",
+      "2006",
+      "2007",
+      "2008",
+      "2009",
+      "2010",
+      "2011",
+      "2012",
+      "2013",
+      "2014",
+      "2015",
+      "2016",
+      "2017",
+      "2018",
+      "2019",
+      "2020",
+      "2021",
+      "2022",
+      "2023",
+      "2024",
+      "2025",
+      "2026",
+      "2027",
+      "2028"
+    ],
+    "series": [
+      {
+        "bucket_id": "unclassified",
+        "label": "Unclassified",
+        "data": [
+          1,
+          1,
+          1,
+          4,
+          2,
+          1,
+          3,
+          5,
+          16,
+          13,
+          14,
+          29,
+          35,
+          38,
+          45,
+          75,
+          77,
+          107,
+          80,
+          84,
+          105,
+          99,
+          105,
+          125,
+          167,
+          138,
+          181,
+          229,
+          188,
+          257,
+          268,
+          245,
+          262,
+          289,
+          166,
+          6,
+          1
+        ]
+      },
+      {
+        "bucket_id": "synaptic_neurotransmitter",
+        "label": "Synaptic/neurotransmitter",
+        "data": [
+          0,
+          0,
+          0,
+          2,
+          1,
+          2,
+          2,
+          8,
+          4,
+          6,
+          4,
+          16,
+          13,
+          11,
+          15,
+          25,
+          23,
+          21,
+          13,
+          14,
+          12,
+          16,
+          15,
+          14,
+          12,
+          10,
+          13,
+          6,
+          7,
+          6,
+          10,
+          4,
+          7,
+          10,
+          4,
+          0,
+          0
+        ]
+      },
+      {
+        "bucket_id": "anti_amyloid_immunotherapy",
+        "label": "Anti-amyloid immunotherapy",
+        "data": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          3,
+          3,
+          7,
+          11,
+          14,
+          13,
+          8,
+          6,
+          5,
+          3,
+          8,
+          3,
+          3,
+          9,
+          2,
+          7,
+          6,
+          7,
+          5,
+          13,
+          8,
+          10,
+          0,
+          0
+        ]
+      },
+      {
+        "bucket_id": "amyloid_production",
+        "label": "Amyloid production (secretase)",
+        "data": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          1,
+          4,
+          6,
+          6,
+          11,
+          1,
+          7,
+          6,
+          5,
+          5,
+          3,
+          3,
+          1,
+          0,
+          3,
+          1,
+          1,
+          2,
+          3,
+          1,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "bucket_id": "neuroinflammation_microglia_complement",
+        "label": "Neuroinflammation/microglia",
+        "data": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          2,
+          2,
+          1,
+          0,
+          1,
+          1,
+          1,
+          3,
+          5,
+          0,
+          1,
+          0,
+          2,
+          2,
+          3,
+          3,
+          1,
+          7,
+          8,
+          9,
+          1,
+          5,
+          1,
+          0,
+          0
+        ]
+      },
+      {
+        "bucket_id": "regenerative_neurotrophic",
+        "label": "Regenerative/neurotrophic",
+        "data": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          2,
+          0,
+          1,
+          0,
+          2,
+          2,
+          0,
+          1,
+          2,
+          0,
+          1,
+          2,
+          4,
+          4,
+          1,
+          2,
+          4,
+          2,
+          1,
+          4,
+          2,
+          4,
+          8,
+          0,
+          0
+        ]
+      },
+      {
+        "bucket_id": "tau_targeted",
+        "label": "Tau-targeted",
+        "data": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          3,
+          2,
+          1,
+          2,
+          5,
+          1,
+          3,
+          0,
+          2,
+          3,
+          1,
+          5,
+          2,
+          4,
+          0,
+          0
+        ]
+      },
+      {
+        "bucket_id": "apoe_lipid_metabolism",
+        "label": "APOE/lipid metabolism",
+        "data": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          3,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          2,
+          1,
+          0,
+          0,
+          3,
+          1,
+          2,
+          1,
+          0,
+          2,
+          0,
+          1,
+          2,
+          3,
+          0,
+          2,
+          2,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "top_sponsors": [
+    {
+      "name": "Pfizer",
+      "count": 62,
+      "buckets": [
+        "Amyloid production (secretase)",
+        "Anti-amyloid immunotherapy",
+        "Synaptic/neurotransmitter",
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "Eli Lilly and Company",
+      "count": 55,
+      "buckets": [
+        "Amyloid production (secretase)",
+        "Anti-amyloid immunotherapy",
+        "Synaptic/neurotransmitter",
+        "Tau-targeted",
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "Avid Radiopharmaceuticals",
+      "count": 42,
+      "buckets": [
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "National Institute on Aging (NIA)",
+      "count": 41,
+      "buckets": [
+        "APOE/lipid metabolism",
+        "Neuroinflammation/microglia",
+        "Synaptic/neurotransmitter",
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "Indiana University",
+      "count": 34,
+      "buckets": [
+        "Synaptic/neurotransmitter",
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "Johns Hopkins University",
+      "count": 33,
+      "buckets": [
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "Chang Gung Memorial Hospital",
+      "count": 32,
+      "buckets": [
+        "Synaptic/neurotransmitter",
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "Massachusetts General Hospital",
+      "count": 32,
+      "buckets": [
+        "Neuroinflammation/microglia",
+        "Synaptic/neurotransmitter",
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "Wyeth is now a wholly owned subsidiary of Pfizer",
+      "count": 32,
+      "buckets": [
+        "Amyloid production (secretase)",
+        "Anti-amyloid immunotherapy",
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "GlaxoSmithKline",
+      "count": 31,
+      "buckets": [
+        "Anti-amyloid immunotherapy",
+        "Neuroinflammation/microglia",
+        "Synaptic/neurotransmitter",
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "Merck Sharp & Dohme LLC",
+      "count": 31,
+      "buckets": [
+        "Amyloid production (secretase)",
+        "Anti-amyloid immunotherapy",
+        "Synaptic/neurotransmitter",
+        "Tau-targeted",
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "Centre Hospitalier Universitaire de Nice",
+      "count": 29,
+      "buckets": [
+        "Amyloid production (secretase)",
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "Assistance Publique - H\u00f4pitaux de Paris",
+      "count": 28,
+      "buckets": [
+        "Synaptic/neurotransmitter",
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "Emory University",
+      "count": 27,
+      "buckets": [
+        "Anti-amyloid immunotherapy",
+        "Neuroinflammation/microglia",
+        "Unclassified"
+      ]
+    },
+    {
+      "name": "Washington University School of Medicine",
+      "count": 27,
+      "buckets": [
+        "Anti-amyloid immunotherapy",
+        "Synaptic/neurotransmitter",
+        "Unclassified"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADscape</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1>ADscape</h1>
+</header>
+<main>
+  <section class="card">
+    <h2>Alzheimer's disease trial landscape tracker</h2>
+    <p class="subtitle">Two views over the same ClinicalTrials.gov-backed dataset.</p>
+    <table>
+      <tbody>
+        <tr>
+          <td style="width: 220px;"><a href="landscape.html"><strong>Landscape Overview</strong></a></td>
+          <td>Aggregate view of the field — trials by mechanism bucket, phase, sponsor, and time. Use this to scan the state of the science.</td>
+        </tr>
+        <tr>
+          <td><a href="ops.html"><strong>Pipeline Ops</strong></a></td>
+          <td>Operator view of the pipeline itself — sync status, curator proposals awaiting review, low-confidence classifications, and the taxonomy watchlist. Check this before trusting the Landscape numbers.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+<footer class="page-footer">ADscape — static dashboard, rebuilt from <code>adscape.db</code> via <code>generate_dashboard_data.py</code></footer>
+</body>
+</html>

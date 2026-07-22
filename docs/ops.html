@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADscape — Pipeline Ops</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1>ADscape</h1>
+  <nav>
+    <a href="landscape.html">Landscape</a>
+    <a href="ops.html" class="active">Pipeline Ops</a>
+  </nav>
+</header>
+<main>
+  <div class="stat-row" id="stat-row"></div>
+
+  <section class="card">
+    <h2>Recent pipeline runs</h2>
+    <p class="subtitle">Backfill and incremental sync runs, most recent first.</p>
+    <div id="table-runs"></div>
+  </section>
+
+  <section class="card">
+    <h2>Curator proposals pending review</h2>
+    <p class="subtitle">The single most actionable thing on this page — a non-empty table here means something needs your judgment call.</p>
+    <div id="table-proposals"></div>
+  </section>
+
+  <section class="card">
+    <h2>Low-confidence classifications needing spot-check</h2>
+    <p class="subtitle">Confidence 0.4–0.7, the "flagged" tier from classify_prompt.md's own routing logic. Sorted shakiest-first.</p>
+    <div id="table-lowconf"></div>
+  </section>
+
+  <section class="card">
+    <h2>Curator watchlist</h2>
+    <p class="subtitle">Entities accumulating toward the curator agent's recurrence threshold — not yet a formal proposal.</p>
+    <div id="table-watchlist"></div>
+  </section>
+
+  <section class="card">
+    <h2>Spot-check history</h2>
+    <p class="subtitle">Manual QA against Alzforum (see spot_check_eval.md). Empty until you've run that process at least once — expected, not a bug.</p>
+    <div class="chart-wrap" id="spotcheck-chart-wrap" style="height: 220px;"><canvas id="chart-spotcheck"></canvas></div>
+    <div id="table-spotcheck" style="margin-top: 16px;"></div>
+  </section>
+</main>
+<footer class="page-footer">Data as of last <code>generate_dashboard_data.py</code> run.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="common.js"></script>
+<script>
+(async function () {
+  const data = await loadJSON("data/ops.json");
+  const fonts = chartFontDefaults();
+  Chart.defaults.color = fonts.color;
+  Chart.defaults.font.family = fonts.font.family;
+  Chart.defaults.font.size = fonts.font.size;
+  const grid = cssVar("--gridline");
+
+  const lastRun = data.recent_runs[0];
+  const statRow = document.getElementById("stat-row");
+  statRow.appendChild(el("div", { class: "stat-tile" }, [
+    el("div", { class: "value", text: lastRun ? fmtDateDisplay(lastRun.completed_at || lastRun.started_at) : "—" }),
+    el("div", { class: "label", text: "Last run" }),
+  ]));
+  statRow.appendChild(el("div", { class: "stat-tile" }, [
+    el("div", { class: "value", text: lastRun ? lastRun.status : "—" }),
+    el("div", { class: "label", text: "Last run status" }),
+  ]));
+  statRow.appendChild(el("div", { class: "stat-tile" }, [
+    el("div", { class: "value", text: fmtInt(data.classified_count) }),
+    el("div", { class: "label", text: "Trials classified" }),
+  ]));
+  statRow.appendChild(el("div", { class: "stat-tile" }, [
+    el("div", { class: "value", text: fmtInt(data.unclassified_count) }),
+    el("div", { class: "label", text: "Trials not yet classified" }),
+  ]));
+  statRow.appendChild(el("div", { class: "stat-tile" }, [
+    el("div", { class: "value", text: fmtInt(data.pending_proposals.length) }),
+    el("div", { class: "label", text: "Pending proposals" }),
+  ]));
+
+  renderTable(
+    document.getElementById("table-runs"),
+    [
+      { key: "run_type", label: "Type" },
+      { key: "status", label: "Status", render: (r) => el("span", { class: `badge ${r.status}`, text: r.status }) },
+      { key: "started_at", label: "Started", render: (r) => fmtDateDisplay(r.started_at) },
+      { key: "completed_at", label: "Completed", render: (r) => fmtDateDisplay(r.completed_at) },
+      { key: "records_fetched", label: "Fetched", num: true, render: (r) => r.records_fetched != null ? fmtInt(r.records_fetched) : "—" },
+      { key: "records_upserted", label: "Upserted", num: true, render: (r) => r.records_upserted != null ? fmtInt(r.records_upserted) : "—" },
+      { key: "error_message", label: "Error", render: (r) => r.error_message || "—" },
+    ],
+    data.recent_runs,
+    "No pipeline runs recorded yet."
+  );
+
+  renderTable(
+    document.getElementById("table-proposals"),
+    [
+      { key: "proposed_at", label: "Proposed", render: (r) => fmtDateDisplay(r.proposed_at) },
+      { key: "bucket", label: "Candidate bucket", render: (r) => {
+          try {
+            const b = JSON.parse(r.proposed_bucket_json);
+            return `${b.id} — ${b.description}`;
+          } catch (e) { return r.proposed_bucket_json; }
+        } },
+      { key: "rationale", label: "Rationale" },
+      { key: "supporting_items", label: "Supporting items", render: (r) => {
+          try { return JSON.parse(r.supporting_items || "[]").join(", ") || "—"; }
+          catch (e) { return r.supporting_items || "—"; }
+        } },
+    ],
+    data.pending_proposals,
+    "No proposals pending review — the curator agent hasn't flagged anything requiring a taxonomy change."
+  );
+
+  renderTable(
+    document.getElementById("table-lowconf"),
+    [
+      { key: "nct_id", label: "NCT ID" },
+      { key: "brief_title", label: "Title" },
+      { key: "bucket_label", label: "Assigned bucket", render: (r) => r.bucket_label || r.bucket_id },
+      { key: "classification_confidence", label: "Confidence", num: true, render: (r) => r.classification_confidence.toFixed(2) },
+      { key: "classification_rationale", label: "Rationale" },
+    ],
+    data.low_confidence,
+    "No trials in the 0.4–0.7 confidence band right now."
+  );
+
+  renderTable(
+    document.getElementById("table-watchlist"),
+    [
+      { key: "entity", label: "Entity" },
+      { key: "item_count", label: "Item count", num: true },
+      { key: "first_seen_at", label: "First seen", render: (r) => fmtDateDisplay(r.first_seen_at) },
+      { key: "last_seen_at", label: "Last seen", render: (r) => fmtDateDisplay(r.last_seen_at) },
+      { key: "note", label: "Note", render: (r) => r.note || "—" },
+    ],
+    data.watchlist,
+    "Watchlist is empty — the curator agent hasn't been run yet."
+  );
+
+  const agreement = data.spot_check.agreement_counts;
+  const hasAgreement = Object.keys(agreement).length > 0;
+  if (hasAgreement) {
+    new Chart(document.getElementById("chart-spotcheck"), {
+      type: "bar",
+      data: {
+        labels: ["match", "partial", "mismatch"],
+        datasets: [{
+          data: ["match", "partial", "mismatch"].map((k) => agreement[k] || 0),
+          backgroundColor: [cssVar("--good"), cssVar("--warning"), cssVar("--critical")],
+          borderRadius: 4,
+          maxBarThickness: 48,
+        }],
+      },
+      options: {
+        indexAxis: "y",
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
+          y: { grid: { display: false } },
+        },
+      },
+    });
+  } else {
+    document.getElementById("spotcheck-chart-wrap").outerHTML =
+      '<div class="empty-state">No spot-check runs logged yet — see spot_check_eval.md for the manual QA process.</div>';
+  }
+
+  renderTable(
+    document.getElementById("table-spotcheck"),
+    [
+      { key: "nct_id", label: "NCT ID" },
+      { key: "bucket_agreement", label: "Bucket agreement", render: (r) => r.bucket_agreement ? el("span", { class: `badge ${r.bucket_agreement}`, text: r.bucket_agreement }) : "—" },
+      { key: "outcome_agreement", label: "Outcome agreement", render: (r) => r.outcome_agreement ? el("span", { class: `badge ${r.outcome_agreement}`, text: r.outcome_agreement }) : "—" },
+      { key: "checked_at", label: "Checked", render: (r) => fmtDateDisplay(r.checked_at) },
+      { key: "notes", label: "Notes", render: (r) => r.notes || "—" },
+    ],
+    data.spot_check.log,
+    ""
+  );
+})().catch((err) => {
+  document.querySelector("main").prepend(el("div", { class: "card empty-state", text: "Failed to load dashboard data: " + err.message }));
+});
+</script>
+</body>
+</html>

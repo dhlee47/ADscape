@@ -1,0 +1,173 @@
+:root {
+  color-scheme: light;
+  --surface-1:      #fcfcfb;
+  --page-plane:      #f9f9f7;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #898781;
+  --gridline:       #e1e0d9;
+  --baseline:       #c3c2b7;
+  --border:         rgba(11,11,11,0.10);
+  --success-text:   #006300;
+  --good:    #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page-plane:      #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --success-text:   #0ca30c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-1:      #1a1a19;
+  --page-plane:      #0d0d0d;
+  --text-primary:   #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted:     #898781;
+  --gridline:       #2c2c2a;
+  --baseline:       #383835;
+  --border:         rgba(255,255,255,0.10);
+  --success-text:   #0ca30c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--page-plane);
+  color: var(--text-primary);
+}
+
+header.top {
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+header.top h1 { font-size: 1.15rem; margin: 0; }
+header.top nav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  margin-left: 18px;
+  font-size: 0.9rem;
+}
+header.top nav a.active, header.top nav a:hover { color: var(--text-primary); }
+
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 28px 64px;
+}
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stat-tile {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  min-width: 150px;
+  flex: 1 1 150px;
+}
+.stat-tile .value {
+  font-size: 1.6rem;
+  font-weight: 600;
+  font-variant-numeric: proportional-nums;
+}
+.stat-tile .label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 2px;
+}
+
+section.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 24px;
+}
+section.card h2 {
+  font-size: 1rem;
+  margin: 0 0 4px;
+}
+section.card .subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+}
+.chart-wrap { position: relative; height: 340px; }
+.chart-wrap.tall { height: 420px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+th, td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--gridline);
+  vertical-align: top;
+}
+th {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+td.num { font-variant-numeric: tabular-nums; text-align: right; }
+tr:last-child td { border-bottom: none; }
+
+.empty-state {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  padding: 10px 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.badge.match { color: var(--good); background: color-mix(in srgb, var(--good) 15%, transparent); }
+.badge.partial { color: var(--warning); background: color-mix(in srgb, var(--warning) 20%, transparent); }
+.badge.mismatch { color: var(--critical); background: color-mix(in srgb, var(--critical) 15%, transparent); }
+.badge.success { color: var(--good); background: color-mix(in srgb, var(--good) 15%, transparent); }
+.badge.failed { color: var(--critical); background: color-mix(in srgb, var(--critical) 15%, transparent); }
+.badge.running { color: var(--warning); background: color-mix(in srgb, var(--warning) 20%, transparent); }
+
+.legend-note { font-size: 0.78rem; color: var(--text-muted); margin-top: 8px; }
+
+footer.page-footer {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  padding: 20px;
+}
