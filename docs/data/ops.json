@@ -12,7 +12,32 @@
   ],
   "classified_count": 4227,
   "unclassified_count": 0,
-  "pending_proposals": [],
+  "pending_proposals": [
+    {
+      "proposed_bucket_json": "{\"id\": \"metabolic_insulin_glucose_signaling\", \"description\": \"Agents targeting brain insulin resistance, glucose hypometabolism, and incretin (GLP-1) signaling pathways implicated in AD pathogenesis, including insulin sensitizers, incretin mimetics, and intranasal insulin\", \"pubmed_query\": \"(\\\"insulin resistance\\\"[tiab] OR \\\"GLP-1\\\"[tiab] OR incretin[tiab] OR \\\"glucose metabolism\\\"[tiab] OR \\\"PPAR-gamma\\\"[tiab] OR \\\"intranasal insulin\\\"[tiab]) AND Alzheimer[tiab]\", \"trial_keywords\": [\"GLP-1 receptor agonist\", \"intranasal insulin\", \"PPAR-gamma agonist\", \"insulin sensitizer\", \"SGLT2 inhibitor\", \"thiazolidinedione\"], \"preclinical_terms\": [\"brain insulin resistance\", \"cerebral glucose hypometabolism\", \"incretin signaling\", \"insulin signaling cascade\", \"PPAR-gamma activation\"], \"representative_agents\": [\"liraglutide\", \"semaglutide\", \"exenatide/exendin-4\", \"intranasal insulin\", \"rosiglitazone\", \"pioglitazone\", \"metformin\", \"dapagliflozin\", \"empagliflozin\"]}",
+      "supporting_items": "[\"NCT01255163 (Exendin-4)\", \"NCT01469351 (liraglutide)\", \"NCT01843075 (liraglutide/ELAD)\", \"NCT04777396 (semaglutide/EVOKE)\", \"NCT04777409 (semaglutide/EVOKE Plus)\", \"NCT07200622 (oral semaglutide)\", \"NCT07135245 (semaglutide combo)\", \"NCT07677865 (GLP-1RA target trial emulation)\", \"NCT00438568 (SNIFF intranasal insulin)\", \"NCT00581867 (intranasal insulin)\", \"NCT01547169 (SNIFF insulin detemir)\", \"NCT01595646 (SNIFF insulin detemir 120)\", \"NCT01767909 (SNIFF)\", \"NCT02462161 (SNIFF insulin aspart)\", \"NCT05006599 (SNIFF Aptar CPS)\", \"NCT06391853 (intranasal insulin neuroimaging)\", \"NCT06072963 (semaglutide+intranasal insulin COMMETS)\", \"NCT00982202 (pioglitazone)\", \"NCT01931566 (pioglitazone biomarker)\", \"NCT02284906 (pioglitazone extension)\", \"NCT00620191 (metformin MCI)\", \"NCT01965756 (metformin AD biomarkers)\", \"NCT04098666 (metformin prevention)\", \"NCT00265148 (rosiglitazone brain imaging)\", \"NCT00334568 (rosiglitazone glucose utilization)\", \"NCT00348140 (rosiglitazone adjunctive)\", \"NCT00348309 (rosiglitazone adjunctive donepezil)\", \"NCT00381238 (rosiglitazone extension)\", \"NCT00428090 (rosiglitazone monotherapy REFLECT-1)\", \"NCT00490568 (rosiglitazone extension)\", \"NCT00550420 (rosiglitazone extension)\", \"NCT03801642 (dapagliflozin)\", \"NCT05081219 (empagliflozin+intranasal insulin)\"]",
+      "rationale": "This metabolic/insulin-glucose-incretin mechanism recurs across dozens of independent trials spanning >15 years and multiple distinct drug classes (GLP-1 agonists, PPAR-gamma agonists, intranasal insulin, biguanides, SGLT2 inhibitors) with no existing taxonomy bucket capturing brain insulin/glucose signaling as an AD mechanism, despite being one of the most heavily and persistently studied non-amyloid/tau hypotheses in the dataset.",
+      "proposed_at": "2026-07-23 04:55:17"
+    },
+    {
+      "proposed_bucket_json": "{\"id\": \"ketone_metabolic_substrate\", \"description\": \"Medium-chain triglyceride, ketone ester, and ketogenic dietary interventions providing an alternative brain energy substrate to compensate for cerebral glucose hypometabolism in AD\", \"pubmed_query\": \"(\\\"ketone bodies\\\"[tiab] OR \\\"medium-chain triglyceride\\\"[tiab] OR \\\"ketogenic diet\\\"[tiab] OR tricaprilin[tiab] OR \\\"ketone ester\\\"[tiab]) AND Alzheimer[tiab]\", \"trial_keywords\": [\"ketogenic diet\", \"medium-chain triglyceride\", \"ketone ester\", \"tricaprilin\", \"caprylic triglyceride\"], \"preclinical_terms\": [\"cerebral energy deficit\", \"ketone body metabolism\", \"brain glucose hypometabolism\", \"alternative fuel hypothesis\"], \"representative_agents\": [\"tricaprilin (AC-1202/Axona)\", \"caprylidene\", \"AC-1204\", \"ketone esters\", \"D-beta-hydroxybutyrate\", \"MCT oil\"]}",
+      "supporting_items": "[\"NCT00142805 (Tricaprilin AC-1202)\", \"NCT01122329 (AC-1202 PET metabolic study)\", \"NCT01211782 (AC-1204 ALERT)\", \"NCT01741194 (AC-1204 26-week)\", \"NCT02912936 (MCT intervention MINT for AD)\", \"NCT03551769 (Tricaprilin PK)\", \"NCT04187547 (Tricaprilin Phase 3 ALTER-AD)\", \"NCT05028114 (Tricaprilin liquid formulation)\", \"NCT03635879 (MCT formulations PK)\", \"NCT03204604 (ketone body challenge imaging)\", \"NCT04421014 (ketone ester biomarkers)\", \"NCT04466735 (D-beta-hydroxybutyrate)\", \"NCT06767124 (ketogenic supplement neuro-energy)\", \"NCT06681948 (ketogenic diet JT821)\", \"NCT02709356 (MCT oil brain metabolism)\", \"NCT05628636 (AC-OLE-01-VA tolerability)\"]",
+      "rationale": "This ketone/MCT metabolic-substrate mechanism is one of the most persistently recurring non-amyloid/tau hypotheses in the dataset, spanning >15 years, multiple independent sponsors, and numerous distinct formulations, yet has no corresponding taxonomy bucket despite consistent mechanistic framing around cerebral energy deficit.",
+      "proposed_at": "2026-07-23 04:55:17"
+    },
+    {
+      "proposed_bucket_json": "{\"id\": \"senolytic_cellular_senescence\", \"description\": \"Senolytic agents targeting clearance of senescent cells as a modifiable driver of AD-associated neurodegeneration and inflammation\", \"pubmed_query\": \"(senolytic[tiab] OR \\\"cellular senescence\\\"[tiab] OR (dasatinib[tiab] AND quercetin[tiab])) AND Alzheimer[tiab]\", \"trial_keywords\": [\"senolytic\", \"dasatinib\", \"quercetin\", \"senescent cell clearance\"], \"preclinical_terms\": [\"cellular senescence\", \"senescence-associated secretory phenotype (SASP)\", \"senescent cell burden\"], \"representative_agents\": [\"dasatinib + quercetin\"]}",
+      "supporting_items": "[\"NCT04063124 (SToMP-AD pilot)\", \"NCT04685590 (SToMP-AD phase II)\", \"NCT04785300 (ALSENLITE)\", \"NCT05422885 (senolytics mobility/cognition)\"]",
+      "rationale": "Four independent trials over multiple years test senolytic clearance of senescent cells as an AD-modifying mechanism \u2014 a distinct, non-overlapping hypothesis from amyloid, tau, neuroinflammation, or synaptic buckets already in the taxonomy, meeting the recurrence bar for a new emerging pattern.",
+      "proposed_at": "2026-07-23 04:55:17"
+    },
+    {
+      "proposed_bucket_json": "{\"id\": \"pde9_cgmp_signaling\", \"description\": \"Phosphodiesterase-9A (PDE9A) inhibitors targeting cGMP/PKG signaling to enhance synaptic plasticity and cognition in AD\", \"pubmed_query\": \"(\\\"PDE9\\\"[tiab] OR \\\"phosphodiesterase 9\\\"[tiab] OR \\\"cGMP\\\"[tiab]) AND Alzheimer[tiab] AND (inhibitor[tiab] OR cognitive[tiab])\", \"trial_keywords\": [\"PDE9 inhibitor\", \"phosphodiesterase-9\", \"cGMP signaling\"], \"preclinical_terms\": [\"cGMP-PKG pathway\", \"synaptic plasticity\", \"long-term potentiation via cGMP\"], \"representative_agents\": [\"PF-04447943\", \"BI 409306\"]}",
+      "supporting_items": "[\"NCT00930059 (PF-04447943 phase 2)\", \"NCT00959803 (PF-04447943 Japanese)\", \"NCT00988598 (PF-04447943+donepezil)\", \"NCT02240693 (BI 409306 proof of concept)\", \"NCT02337907 (BI 409306 cognitive impairment)\", \"NCT02392468 (BI 409306 safety/ocular)\"]",
+      "rationale": "Two distinct pharma programs targeting the same PDE9A/cGMP synaptic-signaling mechanism recur across at least six independent trials, representing a genuine mechanistic cluster distinct from the existing generic synaptic_neurotransmitter bucket (which centers on cholinergic/NMDA/AChE mechanisms).",
+      "proposed_at": "2026-07-23 04:55:17"
+    }
+  ],
   "low_confidence": [
     {
       "nct_id": "NCT00959881",
@@ -295,7 +320,78 @@
       "bucket_label": "Synaptic/neurotransmitter"
     }
   ],
-  "watchlist": [],
+  "watchlist": [
+    {
+      "entity": "gut microbiome / probiotics / FMT interventions",
+      "item_count": 10,
+      "first_seen_at": "2026-07-23 04:55:17",
+      "last_seen_at": "2026-07-23 04:55:17",
+      "note": "Numerous independent trials (probiotics, synbiotics, fecal transplant) recur but represent a loosely defined 'gut-brain axis' mechanism without a clear unifying molecular target; watching for convergence."
+    },
+    {
+      "entity": "oral microbial/infection hypothesis agents (COR388, valacyclovir, doxycycline+rifampin, LHP588, rifaximin)",
+      "item_count": 7,
+      "first_seen_at": "2026-07-23 04:55:17",
+      "last_seen_at": "2026-07-23 04:55:17",
+      "note": "Diverse antimicrobial/antiviral agents recur under an infection-hypothesis theme, but mechanisms are heterogeneous (P. gingivalis, HSV, gut microbiota) \u2014 needs more consistent clustering before proposing."
+    },
+    {
+      "entity": "5-HT6 receptor antagonists (SB-742457, intepirdine/RVT-101)",
+      "item_count": 6,
+      "first_seen_at": "2026-07-23 04:55:17",
+      "last_seen_at": "2026-07-23 04:55:17",
+      "note": "Two distinct sponsors/agents recur across many trials; borderline overlap with existing synaptic_neurotransmitter bucket \u2014 watching to see if reviewers want it split out."
+    },
+    {
+      "entity": "filamin-A modulator simufilam (PTI-125)",
+      "item_count": 6,
+      "first_seen_at": "2026-07-23 04:55:17",
+      "last_seen_at": "2026-07-23 04:55:17",
+      "note": "Single-agent program (Cassava Sciences) across many trials; mechanism unique but no second agent to confirm class-level pattern."
+    },
+    {
+      "entity": "GSK3-beta inhibitors / lithium (tideglusib, NP031112, lithium carbonate)",
+      "item_count": 5,
+      "first_seen_at": "2026-07-23 04:55:17",
+      "last_seen_at": "2026-07-23 04:55:17",
+      "note": "Recurring across multiple independent trials but mechanism (tau phosphorylation via GSK3) may already be covered under existing tau_targeted bucket's 'phosphorylation' term."
+    },
+    {
+      "entity": "sigma-1 receptor agonist ANAVEX2-73",
+      "item_count": 4,
+      "first_seen_at": "2026-07-23 04:55:17",
+      "last_seen_at": "2026-07-23 04:55:17",
+      "note": "Single-agent program (Anavex) across multiple trials; no second distinct sigma-1 agonist observed yet."
+    },
+    {
+      "entity": "azeliragon (RAGE antagonist, TTP488)",
+      "item_count": 3,
+      "first_seen_at": "2026-07-23 04:55:17",
+      "last_seen_at": "2026-07-23 04:55:17",
+      "note": "Single-agent program (vTv Therapeutics) across multiple trials; no second distinct RAGE-targeting agent yet observed to confirm a mechanism-level cluster."
+    },
+    {
+      "entity": "etanercept / TNF-alpha inhibitors",
+      "item_count": 3,
+      "first_seen_at": "2026-07-23 04:55:17",
+      "last_seen_at": "2026-07-23 04:55:17",
+      "note": "Recurs across a few trials but may already be reasonably captured by existing neuroinflammation_microglia_complement bucket; watching for additional distinct TNF-targeted agents."
+    },
+    {
+      "entity": "Src kinase inhibitor saracatinib/AZD0530",
+      "item_count": 2,
+      "first_seen_at": "2026-07-23 04:55:17",
+      "last_seen_at": "2026-07-23 04:55:17",
+      "note": "Only one agent across two trials; insufficient distinct-agent diversity to confirm a mechanism cluster yet."
+    },
+    {
+      "entity": "senolytics beyond dasatinib+quercetin",
+      "item_count": 0,
+      "first_seen_at": "2026-07-23 04:55:17",
+      "last_seen_at": "2026-07-23 04:55:17",
+      "note": "No second distinct senolytic agent observed yet; monitor for diversification within the proposed senolytic bucket."
+    }
+  ],
   "spot_check": {
     "agreement_counts": {},
     "log": []

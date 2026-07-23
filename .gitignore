@@ -16,3 +16,7 @@ node_modules/
 
 # Run logs from ingest.py/classify.py - regenerable, noisy, not source
 *.log
+
+# Raw LLM response dumps saved for debugging (curator_agent.py) - the
+# durable record is taxonomy_proposals/curator_watchlist in the db, not this
+*_last_response.txt
