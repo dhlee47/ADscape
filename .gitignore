@@ -23,3 +23,7 @@ node_modules/
 # edits), not these
 *_last_response.txt
 taxonomy_discovery_response.json
+
+# Staged CT.gov results source text (stage_endpoint_results.py) - regenerable
+# from the public API, and the durable record is endpoint_assessments in the db
+staging/
