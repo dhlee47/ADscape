@@ -8,7 +8,10 @@
 </head>
 <body>
 <header class="top">
-  <h1>ADscape</h1>
+  <div class="brandwrap">
+    <h1>ADscape</h1>
+    <span class="tagline">a field survey of the Alzheimer's trial landscape</span>
+  </div>
   <nav>
     <a href="landscape.html" class="active">Landscape</a>
     <a href="ops.html">Pipeline Ops</a>
@@ -18,26 +21,65 @@
   <div class="stat-row" id="stat-row"></div>
 
   <section class="card">
+    <span class="eyebrow">Filter</span>
+    <h2>Filter by status</h2>
+    <p class="subtitle">Click to toggle a status on or off. All-off and all-on both mean "show everything" — every chart and table below recomputes from the filtered set.</p>
+    <div class="status-tabs" id="status-tabs"></div>
+    <div class="filter-hint" id="filter-hint"></div>
+  </section>
+
+  <section class="card">
+    <span class="eyebrow">Mechanism</span>
     <h2>Trials by mechanism</h2>
-    <p class="subtitle">Includes "Unclassified" as its own bar — a growing unclassified count is a signal, not noise to hide.</p>
-    <div class="chart-wrap"><canvas id="chart-mechanism"></canvas></div>
+    <p class="subtitle">Log scale. Hover a bar to see which specific compounds make up that bucket.</p>
+    <div class="chart-with-panel">
+      <div class="chart-col">
+        <div class="chart-wrap"><canvas id="chart-mechanism"></canvas></div>
+        <div class="zero-caption" id="mechanism-zero-caption"></div>
+      </div>
+      <div class="panel-col" id="mechanism-panel-col"></div>
+    </div>
   </section>
 
   <section class="card">
+    <span class="eyebrow">Trial phase</span>
     <h2>Trials by phase</h2>
-    <p class="subtitle">Combination phases (e.g. Phase 2/3) get their own category rather than being folded into one phase.</p>
-    <div class="chart-wrap"><canvas id="chart-phase"></canvas></div>
+    <p class="subtitle">Excludes "N/A" phase (the raw API value for not-applicable — mostly non-drug interventions). Hover a bar to see that phase's mechanism breakdown.</p>
+    <div class="chart-with-panel">
+      <div class="chart-col">
+        <div class="chart-wrap"><canvas id="chart-phase"></canvas></div>
+      </div>
+      <div class="panel-col" id="phase-panel-col"></div>
+    </div>
   </section>
 
   <section class="card">
+    <span class="eyebrow">Over time</span>
     <h2>New trials over time, by mechanism</h2>
-    <p class="subtitle">Grouped by trial start-date year. Watch for a mechanism climbing before it's been formally flagged.</p>
+    <p class="subtitle">Grouped by trial start-date year. Hover a point for the compounds behind it.</p>
     <div class="chart-wrap tall"><canvas id="chart-time"></canvas></div>
   </section>
 
   <section class="card">
+    <span class="eyebrow">Early stops</span>
+    <h2>Stop reasons by mechanism</h2>
+    <p class="subtitle">Stacked by why trials that stopped early stopped (excludes trials still running/completed normally, and any not-yet-categorized stop reason). The number above each bar is that bucket's total trial count, for scale against the much smaller stopped-early counts. Hover a segment for the actual trials.</p>
+    <div class="chart-wrap"><canvas id="chart-stopreasons"></canvas></div>
+    <div class="empty-state" id="stopreasons-empty" style="display:none;"></div>
+  </section>
+
+  <section class="card">
+    <span class="eyebrow">Outcomes</span>
+    <h2>Endpoint outcomes by category</h2>
+    <p class="subtitle">% of assessed endpoints that were met, biomarker vs. cognitive/clinical, per bucket — this is the chart that shows "met biomarker but not cognitive" as a visual gap. N is the count of <em>assessed</em> endpoints behind each bar, not all endpoints; bars built from a small N are noted as such rather than implying more confidence than the sample supports.</p>
+    <div class="chart-wrap"><canvas id="chart-endpoints"></canvas></div>
+    <div class="empty-state" id="endpoints-empty" style="display:none;"></div>
+  </section>
+
+  <section class="card">
+    <span class="eyebrow">Sponsors</span>
     <h2>Top lead sponsors</h2>
-    <p class="subtitle">Top 15 by number of led trials, with the mechanism bucket(s) each is active in.</p>
+    <p class="subtitle">Top 15 by number of led trials (within the active filter), with the mechanism bucket(s) each is active in.</p>
     <div id="table-sponsors"></div>
   </section>
 </main>
@@ -54,7 +96,23 @@
   Chart.defaults.font.size = fonts.font.size;
   const grid = cssVar("--gridline");
 
-  // --- stat row ---
+  const allTrials = data.trials;
+  const allOutcomes = data.outcomes;
+  // nct_id -> bucket_id, for joining the outcomes array (which doesn't repeat
+  // bucket_id per row) back to mechanism buckets client-side
+  const bucketByNctId = new Map(allTrials.map((t) => [t.nct_id, t.bucket_id]));
+  // Derived from the loaded data, not the static BUCKET_CATALOG in common.js -
+  // that list is the original 8 seed/taxonomy buckets only and would silently
+  // drop any bucket added later by review_proposal.py's accept step (exactly
+  // the bug this replaced: a hardcoded catalog going stale the moment the
+  // taxonomy grows). This always reflects whatever's actually in the data.
+  const bucketCatalog = [...new Map(allTrials.map((t) => [t.bucket_id, { bucket_id: t.bucket_id, label: t.bucket_label }])).values()];
+  const activeStatuses = new Set();
+  const charts = {}; // mechanism | phase | time -> Chart instance
+  const panels = {}; // mechanism | phase -> {chart, canvas, wrap, placeholder, title}
+
+  // --- static stat row (unaffected by the status filter - it's the page's
+  // own dataset summary, not one of the charts the filter cascades to) ---
   const statRow = document.getElementById("stat-row");
   statRow.appendChild(el("div", { class: "stat-tile" }, [
     el("div", { class: "value", text: fmtInt(data.total_trials) }),
@@ -64,98 +122,547 @@
     el("div", { class: "value", text: fmtDateDisplay(data.last_sync) }),
     el("div", { class: "label", text: "Last successful sync" }),
   ]));
-  data.status_breakdown.slice(0, 4).forEach((s) => {
-    statRow.appendChild(el("div", { class: "stat-tile" }, [
-      el("div", { class: "value", text: fmtInt(s.count) }),
-      el("div", { class: "label", text: s.status }),
-    ]));
+
+  function filteredTrials() {
+    if (activeStatuses.size === 0) return allTrials;
+    return allTrials.filter((t) => activeStatuses.has(t.status));
+  }
+
+  // ---------- status tabs (v1 #1, v2 #2) ----------
+  // Fixed list, not "top N by count" (v1's original approach) - v2 adds
+  // ACTIVE_NOT_RECRUITING as a named 5th tab even though it's the 6th most
+  // common status (168 trials, behind NOT_YET_RECRUITING's 195), so a
+  // count-ranked slice would have picked the wrong one.
+  const STATUS_TABS = [
+    { status: "COMPLETED", label: "Completed" },
+    { status: "RECRUITING", label: "Recruiting" },
+    { status: "UNKNOWN", label: "Unknown" },
+    { status: "TERMINATED", label: "Terminated" },
+    { status: "ACTIVE_NOT_RECRUITING", label: "Active / Ongoing" },
+  ];
+  const statusCounts = new Map(data.status_breakdown.map((s) => [s.status, s.count]));
+
+  const tabsEl = document.getElementById("status-tabs");
+  const hintEl = document.getElementById("filter-hint");
+  STATUS_TABS.forEach(({ status, label }) => {
+    const btn = el("button", { class: "status-tab", type: "button" }, [
+      el("span", { text: label }),
+      el("span", { class: "n", text: `(${fmtInt(statusCounts.get(status) || 0)})` }),
+    ]);
+    btn.addEventListener("click", () => {
+      if (activeStatuses.has(status)) activeStatuses.delete(status);
+      else activeStatuses.add(status);
+      btn.classList.toggle("on", activeStatuses.has(status));
+      renderAll();
+    });
+    tabsEl.appendChild(btn);
   });
 
-  // --- trials by mechanism ---
-  const mech = data.by_mechanism;
-  new Chart(document.getElementById("chart-mechanism"), {
-    type: "bar",
-    data: {
-      labels: mech.map((m) => m.label),
-      datasets: [{
-        data: mech.map((m) => m.count),
-        backgroundColor: mech.map((m) => colorForBucket(m.bucket_id)),
-        borderRadius: 4,
-        maxBarThickness: 56,
+  // ---------- breakdown panel factory (shared by #3 and #4) ----------
+  function createBreakdownPanel(containerEl, defaultTitle) {
+    const panelEl = el("div", { class: "breakdown-panel" });
+    const titleEl = el("div", { class: "panel-title", text: defaultTitle });
+    const chartWrapEl = el("div", { class: "panel-chart-wrap" });
+    const canvas = document.createElement("canvas");
+    // fix #2: real empty state - icon + short instruction, not blank colored space
+    const placeholder = el("div", { class: "panel-placeholder" });
+    placeholder.innerHTML = HOVER_ICON_SVG;
+    placeholder.appendChild(el("span", { text: defaultTitle }));
+    chartWrapEl.appendChild(canvas);
+    panelEl.appendChild(titleEl);
+    panelEl.appendChild(chartWrapEl);
+    containerEl.appendChild(panelEl);
+
+    const chart = new Chart(canvas, {
+      type: "doughnut",
+      data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+      options: {
+        plugins: {
+          legend: { position: "bottom", labels: { boxWidth: 9, boxHeight: 9, usePointStyle: true, font: { size: 10 } } },
+          tooltip: { ...darkTooltipTheme(), callbacks: { label: (ctx) => `${ctx.label}: ${fmtInt(ctx.parsed)}` } },
+        },
+      },
+    });
+    canvas.style.display = "none";
+
+    function show(title, labels, counts, colors) {
+      placeholder.style.display = "none";
+      canvas.style.display = "";
+      titleEl.textContent = title;
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = counts;
+      chart.data.datasets[0].backgroundColor = colors;
+      chart.update();
+    }
+    function clear() {
+      canvas.style.display = "none";
+      placeholder.style.display = "";
+      titleEl.textContent = defaultTitle;
+    }
+    return { show, clear };
+  }
+  panels.mechanism = createBreakdownPanel(document.getElementById("mechanism-panel-col"), "Hover a bar to see its compounds");
+  panels.phase = createBreakdownPanel(document.getElementById("phase-panel-col"), "Hover a bar to see its mechanism mix");
+
+  function topNWithOther(countsMap, n) {
+    const entries = [...countsMap.entries()].sort((a, b) => b[1] - a[1]);
+    const top = entries.slice(0, n);
+    const rest = entries.slice(n).reduce((sum, [, c]) => sum + c, 0);
+    if (rest > 0) top.push(["Other", rest]);
+    return top;
+  }
+
+  // Same top-N-plus-Other capping as topNWithOther, but "unknown" is pulled
+  // out first and always shown as its own slice (dashboard_changes_v2.md #3:
+  // "should show up as their own 'Unknown' slice, not get silently dropped
+  // or merged into Other") - a large Unknown slice is itself informative
+  // (classification coverage), so it must never compete with real targets
+  // for one of the top-8 slots or get swept into the Other catch-all.
+  function topNTargetsWithOther(countsMap, n) {
+    const unknownCount = countsMap.get("unknown") || 0;
+    const realTargets = [...countsMap.entries()].filter(([k]) => k !== "unknown").sort((a, b) => b[1] - a[1]);
+    const top = realTargets.slice(0, n);
+    const rest = realTargets.slice(n).reduce((sum, [, c]) => sum + c, 0);
+    if (rest > 0) top.push(["Other", rest]);
+    if (unknownCount > 0) top.push(["Unknown", unknownCount]);
+    return top;
+  }
+
+  // ---------- mechanism chart (#2 log axis + zero handling, #3 hover) ----------
+  function renderMechanismChart(trials) {
+    const counts = new Map();
+    for (const t of trials) counts.set(t.bucket_id, (counts.get(t.bucket_id) || 0) + 1);
+
+    const present = bucketCatalog.map((b) => ({ ...b, count: counts.get(b.bucket_id) || 0 }));
+    const nonZero = present.filter((b) => b.count > 0).sort((a, b) => b.count - a.count);
+    const zero = present.filter((b) => b.count === 0);
+    // pending (bucket_id IS NULL) trials aren't a taxonomy bucket - only show
+    // this bar if it's actually non-empty, never list it as a "zero" entry
+    const pendingCount = counts.get(UNCLASSIFIED_PENDING.bucket_id) || 0;
+    if (pendingCount > 0) {
+      nonZero.push({ ...UNCLASSIFIED_PENDING, count: pendingCount });
+      nonZero.sort((a, b) => b.count - a.count);
+    }
+
+    document.getElementById("mechanism-zero-caption").textContent =
+      zero.length ? `(0 trials: ${zero.map((b) => b.label).join(", ")})` : "";
+
+    if (charts.mechanism) charts.mechanism.destroy();
+    charts.mechanism = new Chart(document.getElementById("chart-mechanism"), {
+      type: "bar",
+      data: {
+        labels: nonZero.map((b) => b.label),
+        datasets: [{
+          data: nonZero.map((b) => b.count),
+          backgroundColor: nonZero.map((b) => colorForBucket(b.bucket_id)),
+          borderRadius: 4,
+          maxBarThickness: 56,
+        }],
+      },
+      options: {
+        plugins: { legend: { display: false }, tooltip: { ...darkTooltipTheme(), callbacks: { label: (ctx) => `${fmtInt(ctx.parsed.y)} trials` } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 40, minRotation: 20 } },
+          y: { type: "logarithmic", grid: { color: grid }, ticks: { callback: (v) => fmtInt(v) } },
+        },
+        onHover: (evt, active) => {
+          if (!active.length) { panels.mechanism.clear(); return; }
+          const bucket = nonZero[active[0].index];
+          // dashboard_changes_v2.md #3: breakdown by interventions.target (the
+          // druggable target, e.g. "TREM2"), not by compound name as in v1 -
+          // every intervention counts, including generic/placebo arms, since
+          // those correctly classify to target='unknown' rather than needing
+          // a separate name-based filter (isGenericInterventionName doesn't
+          // apply here - that was for the compound-name view specifically).
+          const counts = new Map();
+          for (const t of trials) {
+            if (t.bucket_id !== bucket.bucket_id) continue;
+            for (const iv of t.interventions) {
+              const tgt = iv.target || "unknown";
+              counts.set(tgt, (counts.get(tgt) || 0) + 1);
+            }
+          }
+          if (counts.size === 0) { panels.mechanism.clear(); return; }
+          const top = topNTargetsWithOther(counts, 8);
+          const colors = top.map(([label], i) => {
+            if (label === "Other") return mutedColor();
+            if (label === "Unknown") return cssVar("--baseline");
+            return BREAKDOWN_PALETTE[i % 8];
+          });
+          panels.mechanism.show(bucket.label, top.map((e) => e[0]), top.map((e) => e[1]), colors);
+        },
+      },
+    });
+  }
+
+  // ---------- phase chart (#4: hide N/A, hover breakdown by bucket) ----------
+  function renderPhaseChart(trials) {
+    const eligible = trials.filter((t) => t.phase_raw !== "NA");
+    const counts = new Map();
+    for (const t of eligible) counts.set(t.phase_label, (counts.get(t.phase_label) || 0) + 1);
+    const entries = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+
+    if (charts.phase) charts.phase.destroy();
+    charts.phase = new Chart(document.getElementById("chart-phase"), {
+      type: "bar",
+      data: {
+        labels: entries.map((e) => e[0]),
+        datasets: [{
+          data: entries.map((e) => e[1]),
+          backgroundColor: colorForBucket("anti_amyloid_immunotherapy"),
+          borderRadius: 4,
+          maxBarThickness: 56,
+        }],
+      },
+      options: {
+        indexAxis: "y",
+        plugins: { legend: { display: false }, tooltip: { ...darkTooltipTheme(), callbacks: { label: (ctx) => `${fmtInt(ctx.parsed.x)} trials` } } },
+        scales: {
+          x: { beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
+          y: { grid: { display: false } },
+        },
+        onHover: (evt, active) => {
+          if (!active.length) { panels.phase.clear(); return; }
+          const phaseLabel = entries[active[0].index][0];
+          const byBucket = new Map();
+          for (const t of eligible) {
+            if (t.phase_label !== phaseLabel) continue;
+            byBucket.set(t.bucket_id, (byBucket.get(t.bucket_id) || 0) + 1);
+          }
+          const top = [...byBucket.entries()].sort((a, b) => b[1] - a[1]);
+          const labels = top.map(([bid]) => bucketCatalog.find((b) => b.bucket_id === bid)?.label || bid);
+          panels.phase.show(phaseLabel, labels, top.map((e) => e[1]), top.map(([bid]) => colorForBucket(bid)));
+        },
+      },
+    });
+  }
+
+  // ---------- time series chart (#5: log axis, hover compound list) ----------
+  function renderTimeChart(trials) {
+    const withYear = trials.filter((t) => t.start_year);
+    const years = [...new Set(withYear.map((t) => t.start_year))].sort();
+    const byBucketYear = new Map(); // bucket_id -> year -> count
+    const interventionsByBucketYear = new Map(); // bucket_id -> year -> Map(name->count)
+
+    for (const t of withYear) {
+      if (!byBucketYear.has(t.bucket_id)) byBucketYear.set(t.bucket_id, new Map());
+      const ym = byBucketYear.get(t.bucket_id);
+      ym.set(t.start_year, (ym.get(t.start_year) || 0) + 1);
+
+      if (!interventionsByBucketYear.has(t.bucket_id)) interventionsByBucketYear.set(t.bucket_id, new Map());
+      const iby = interventionsByBucketYear.get(t.bucket_id);
+      if (!iby.has(t.start_year)) iby.set(t.start_year, new Map());
+      const im = iby.get(t.start_year);
+      for (const iv of t.interventions) {
+        // this tooltip is still the v1 compound-name list (dashboard_changes_v2.md
+        // only redirected the mechanism-bar hover panel to target, not this one)
+        if (isGenericInterventionName(iv.name)) continue;
+        im.set(iv.name, (im.get(iv.name) || 0) + 1);
+      }
+    }
+
+    const bucketIds = [...byBucketYear.keys()].sort(
+      (a, b) => [...byBucketYear.get(b).values()].reduce((s, c) => s + c, 0) - [...byBucketYear.get(a).values()].reduce((s, c) => s + c, 0)
+    );
+
+    if (charts.time) charts.time.destroy();
+    charts.time = new Chart(document.getElementById("chart-time"), {
+      type: "line",
+      data: {
+        labels: years,
+        datasets: bucketIds.map((bid) => {
+          const label = bucketCatalog.find((b) => b.bucket_id === bid)?.label || bid;
+          const ym = byBucketYear.get(bid);
+          return {
+            label,
+            bucket_id: bid,
+            data: years.map((y) => ym.get(y) || null), // 0 -> null: no point plotted (also keeps log scale happy)
+            borderColor: colorForBucket(bid),
+            backgroundColor: colorForBucket(bid),
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            tension: 0.15,
+            spanGaps: false,
+          };
+        }),
+      },
+      options: {
+        interaction: { mode: "nearest", intersect: false },
+        plugins: {
+          legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true } },
+          tooltip: {
+            ...darkTooltipTheme(),
+            callbacks: {
+              label: (ctx) => {
+                const bid = ctx.dataset.bucket_id;
+                const year = ctx.label;
+                const im = interventionsByBucketYear.get(bid)?.get(year);
+                const base = `${ctx.dataset.label}: ${fmtInt(ctx.parsed.y)} trial(s)`;
+                if (!im || im.size === 0) return base;
+                const sorted = [...im.entries()].sort((a, b) => b[1] - a[1]);
+                const names = sorted.slice(0, 5).map((e) => e[0]);
+                const more = sorted.length - names.length;
+                return `${base} — ${names.join(", ")}${more > 0 ? ` +${more} more` : ""}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: { type: "linear", beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
+        },
+      },
+    });
+  }
+
+  // Small text label drawn above each bar/segment-stack, via getValue(index).
+  // Used for "total trial count" (stop reasons) and "N assessed" (endpoints) -
+  // both are "don't let the chart imply more than the data supports" labels
+  // called out explicitly in outcomes_schema_and_dashboard.md.
+  function topLabelPlugin(id, getLabelText) {
+    return {
+      id,
+      afterDatasetsDraw(chart) {
+        const visibleMetas = chart.data.datasets.map((_, i) => chart.getDatasetMeta(i)).filter((m) => !m.hidden);
+        if (visibleMetas.length === 0) return;
+        const topMeta = visibleMetas[visibleMetas.length - 1];
+        const { ctx } = chart;
+        ctx.save();
+        ctx.fillStyle = cssVar("--text-muted");
+        ctx.font = "10px Inter, system-ui, -apple-system, 'Segoe UI', sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        topMeta.data.forEach((bar, index) => {
+          const text = getLabelText(index);
+          if (text != null) ctx.fillText(text, bar.x, bar.y - 4);
+        });
+        ctx.restore();
+      },
+    };
+  }
+
+  // ---------- stop reasons by mechanism ----------
+  function renderStopReasonsChart(trials) {
+    const totalByBucket = new Map();
+    for (const t of trials) totalByBucket.set(t.bucket_id, (totalByBucket.get(t.bucket_id) || 0) + 1);
+
+    const bucketsInOrder = bucketCatalog
+      .map((b) => ({ ...b, total: totalByBucket.get(b.bucket_id) || 0 }))
+      .filter((b) => b.total > 0)
+      .sort((a, b) => b.total - a.total);
+
+    // reasonId -> bucket_id -> count, plus the actual trials for the hover list
+    const countsByReasonBucket = new Map();
+    const trialsByReasonBucket = new Map(); // `${reasonId}|${bucket_id}` -> [{nct_id, brief_title}]
+    for (const t of trials) {
+      if (!t.stop_reason_category || t.stop_reason_category === "not_applicable") continue;
+      if (!countsByReasonBucket.has(t.stop_reason_category)) countsByReasonBucket.set(t.stop_reason_category, new Map());
+      const m = countsByReasonBucket.get(t.stop_reason_category);
+      m.set(t.bucket_id, (m.get(t.bucket_id) || 0) + 1);
+
+      const key = `${t.stop_reason_category}|${t.bucket_id}`;
+      if (!trialsByReasonBucket.has(key)) trialsByReasonBucket.set(key, []);
+      trialsByReasonBucket.get(key).push({ nct_id: t.nct_id, brief_title: t.brief_title });
+    }
+
+    const emptyEl = document.getElementById("stopreasons-empty");
+    if (charts.stopreasons) { charts.stopreasons.destroy(); charts.stopreasons = null; }
+
+    if (countsByReasonBucket.size === 0 || bucketsInOrder.length === 0) {
+      emptyEl.style.display = "";
+      emptyEl.textContent = "No stop-reason classifications yet - trials.stop_reason_category isn't populated "
+        + "(blocked on the taxonomy discovery pass as of this build - see ASSUMPTIONS.md).";
+      return;
+    }
+    emptyEl.style.display = "none";
+
+    const bucketIds = bucketsInOrder.map((b) => b.bucket_id);
+    const datasets = STOP_REASON_CATALOG.map((reason) => ({
+      label: reason.label,
+      stop_reason_id: reason.id,
+      data: bucketIds.map((bid) => countsByReasonBucket.get(reason.id)?.get(bid) || 0),
+      backgroundColor: colorForStopReason(reason.id),
+      borderRadius: 2,
+    }));
+
+    charts.stopreasons = new Chart(document.getElementById("chart-stopreasons"), {
+      type: "bar",
+      data: { labels: bucketsInOrder.map((b) => b.label), datasets },
+      plugins: [topLabelPlugin("stopReasonTotals", (i) => fmtInt(bucketsInOrder[i]?.total))],
+      options: {
+        plugins: {
+          legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true } },
+          tooltip: {
+            ...darkTooltipTheme(),
+            callbacks: {
+              label: (ctx) => {
+                const bid = bucketIds[ctx.dataIndex];
+                const list = trialsByReasonBucket.get(`${ctx.dataset.stop_reason_id}|${bid}`) || [];
+                if (list.length === 0) return `${ctx.dataset.label}: 0`;
+                const shown = list.slice(0, 5).map((t) => `${t.nct_id} - ${t.brief_title}`);
+                const more = list.length - shown.length;
+                return [`${ctx.dataset.label}: ${list.length}`, ...shown, ...(more > 0 ? [`+${more} more`] : [])];
+              },
+            },
+          },
+        },
+        scales: {
+          x: { stacked: true, grid: { display: false }, ticks: { autoSkip: false, maxRotation: 40, minRotation: 20 } },
+          y: { stacked: true, beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
+        },
+      },
+    });
+  }
+
+  // ---------- endpoint outcomes by category ----------
+  function renderEndpointOutcomesChart(trials) {
+    const allowedNctIds = new Set(trials.map((t) => t.nct_id));
+
+    const stats = new Map(); // bucket_id -> {biomarker:{met,total}, cognitive_clinical:{met,total}}
+    for (const o of allOutcomes) {
+      if (!allowedNctIds.has(o.nct_id)) continue;
+      if (o.endpoint_category !== "biomarker" && o.endpoint_category !== "cognitive_clinical") continue;
+      if (o.met == null) continue; // not yet assessed - excluded from N, not counted as a miss
+      const bucketId = bucketByNctId.get(o.nct_id);
+      if (!stats.has(bucketId)) stats.set(bucketId, { biomarker: { met: 0, total: 0 }, cognitive_clinical: { met: 0, total: 0 } });
+      const rec = stats.get(bucketId)[o.endpoint_category];
+      rec.total += 1;
+      if (o.met === "met") rec.met += 1;
+    }
+
+    const emptyEl = document.getElementById("endpoints-empty");
+    if (charts.endpoints) { charts.endpoints.destroy(); charts.endpoints = null; }
+
+    const bucketsWithData = bucketCatalog.filter((b) => stats.has(b.bucket_id));
+    if (bucketsWithData.length === 0) {
+      // fix #3: illustrated "pending data" state - explain what this will show,
+      // not just that it's currently empty
+      emptyEl.className = "pending-state";
+      emptyEl.style.display = "";
+      emptyEl.innerHTML = "";
+      emptyEl.appendChild(el("div", { class: "pending-copy" }, [
+        el("h3", { text: "Waiting on endpoint assessments" }),
+        el("p", { text: "This will show % of assessed endpoints that were met, biomarker vs. cognitive/clinical, per mechanism bucket - once the Sonnet-based met/significance prompt has run against real source text (see outcomes_schema_and_dashboard.md). Not run yet, by design - deferred as separate scope from the category classification already populated above." }),
+      ]));
+      const skeleton = el("div", { class: "pending-skeleton" });
+      const previewBuckets = bucketCatalog.filter((b) => b.bucket_id !== "unclassified").slice(0, 3);
+      for (const b of previewBuckets) {
+        for (const rowLabel of ["Biomarker", "Cognitive"]) {
+          const width = 30 + Math.round(Math.random() * 55);
+          skeleton.appendChild(el("div", { class: "row" }, [
+            el("span", { class: "row-label", text: `${b.label.slice(0, 12)} · ${rowLabel}` }),
+            el("div", { class: "ghost-bar", style: `width:${width}%` }),
+          ]));
+        }
+      }
+      emptyEl.appendChild(skeleton);
+      return;
+    }
+    emptyEl.className = "empty-state";
+    emptyEl.style.display = "none";
+
+    const pct = (rec) => (rec.total > 0 ? Math.round((rec.met / rec.total) * 100) : 0);
+    const sorted = bucketsWithData
+      .map((b) => ({ ...b, ...stats.get(b.bucket_id) }))
+      .sort((a, b) => (b.biomarker.total + b.cognitive_clinical.total) - (a.biomarker.total + a.cognitive_clinical.total));
+
+    charts.endpoints = new Chart(document.getElementById("chart-endpoints"), {
+      type: "bar",
+      data: {
+        labels: sorted.map((b) => b.label),
+        datasets: [
+          {
+            label: "Biomarker",
+            data: sorted.map((b) => pct(b.biomarker)),
+            n: sorted.map((b) => b.biomarker.total),
+            backgroundColor: colorForBucket("anti_amyloid_immunotherapy"),
+            borderRadius: 3,
+          },
+          {
+            label: "Cognitive/clinical",
+            data: sorted.map((b) => pct(b.cognitive_clinical)),
+            n: sorted.map((b) => b.cognitive_clinical.total),
+            backgroundColor: colorForBucket("synaptic_neurotransmitter"),
+            borderRadius: 3,
+          },
+        ],
+      },
+      plugins: [{
+        id: "endpointN",
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          ctx.save();
+          ctx.fillStyle = cssVar("--text-muted");
+          ctx.font = "10px Inter, system-ui, -apple-system, 'Segoe UI', sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          chart.data.datasets.forEach((ds, di) => {
+            chart.getDatasetMeta(di).data.forEach((bar, i) => ctx.fillText(`N=${ds.n[i]}`, bar.x, bar.y - 4));
+          });
+          ctx.restore();
+        },
       }],
-    },
-    options: {
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${fmtInt(ctx.parsed.y)} trials` } } },
-      scales: {
-        x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 40, minRotation: 20 } },
-        y: { beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
+      options: {
+        plugins: {
+          legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true } },
+          tooltip: {
+            ...darkTooltipTheme(),
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}% met (N=${ctx.dataset.n[ctx.dataIndex]})`,
+            },
+          },
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true, max: 100, grid: { color: grid }, ticks: { callback: (v) => v + "%" } },
+        },
       },
-    },
-  });
+    });
+  }
 
-  // --- trials by phase ---
-  const phase = data.by_phase;
-  new Chart(document.getElementById("chart-phase"), {
-    type: "bar",
-    data: {
-      labels: phase.map((p) => p.phase),
-      datasets: [{
-        data: phase.map((p) => p.count),
-        backgroundColor: colorForBucket("anti_amyloid_immunotherapy"),
-        borderRadius: 4,
-        maxBarThickness: 56,
-      }],
-    },
-    options: {
-      indexAxis: "y",
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${fmtInt(ctx.parsed.x)} trials` } } },
-      scales: {
-        x: { beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
-        y: { grid: { display: false } },
-      },
-    },
-  });
+  // ---------- sponsor table ----------
+  function renderSponsorTable(trials) {
+    const bySponsor = new Map(); // name -> { count, buckets:Set }
+    for (const t of trials) {
+      if (!t.lead_sponsor) continue;
+      if (!bySponsor.has(t.lead_sponsor)) bySponsor.set(t.lead_sponsor, { count: 0, buckets: new Set() });
+      const rec = bySponsor.get(t.lead_sponsor);
+      rec.count += 1;
+      rec.buckets.add(t.bucket_label);
+    }
+    const top15 = [...bySponsor.entries()].sort((a, b) => b[1].count - a[1].count).slice(0, 15)
+      .map(([name, rec]) => ({ name, count: rec.count, buckets: [...rec.buckets].sort() }));
 
-  // --- trials over time ---
-  const tot = data.trials_over_time;
-  new Chart(document.getElementById("chart-time"), {
-    type: "line",
-    data: {
-      labels: tot.years,
-      datasets: tot.series.map((s) => ({
-        label: s.label,
-        data: s.data,
-        borderColor: colorForBucket(s.bucket_id),
-        backgroundColor: colorForBucket(s.bucket_id),
-        borderWidth: 2,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-        tension: 0.15,
-      })),
-    },
-    options: {
-      interaction: { mode: "nearest", intersect: false },
-      plugins: {
-        legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true } },
-      },
-      scales: {
-        x: { grid: { display: false } },
-        y: { beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
-      },
-    },
-  });
+    renderTable(
+      document.getElementById("table-sponsors"),
+      [
+        { key: "name", label: "Sponsor" },
+        { key: "count", label: "Led trials", num: true },
+        { key: "buckets", label: "Active mechanism buckets", render: (r) => r.buckets.join(", ") || "—" },
+      ],
+      top15,
+      "No sponsor data matches the current filter."
+    );
+  }
 
-  // --- top sponsors table ---
-  renderTable(
-    document.getElementById("table-sponsors"),
-    [
-      { key: "name", label: "Sponsor" },
-      { key: "count", label: "Led trials", num: true },
-      { key: "buckets", label: "Active mechanism buckets", render: (r) => r.buckets.join(", ") || "—" },
-    ],
-    data.top_sponsors,
-    "No sponsor data yet."
-  );
+  // ---------- cascade (#1) ----------
+  function renderAll() {
+    const trials = filteredTrials();
+    hintEl.textContent = activeStatuses.size === 0
+      ? `Showing all ${fmtInt(allTrials.length)} trials (no status filter active).`
+      : `Showing ${fmtInt(trials.length)} of ${fmtInt(allTrials.length)} trials (filtered by: ${[...activeStatuses].map((s) => STATUS_TABS.find((t) => t.status === s)?.label || s).join(", ")}).`;
+    panels.mechanism.clear();
+    panels.phase.clear();
+    renderMechanismChart(trials);
+    renderPhaseChart(trials);
+    renderTimeChart(trials);
+    renderStopReasonsChart(trials);
+    renderEndpointOutcomesChart(trials);
+    renderSponsorTable(trials);
+  }
+
+  renderAll();
 })().catch((err) => {
   document.querySelector("main").prepend(el("div", { class: "card empty-state", text: "Failed to load dashboard data: " + err.message }));
 });

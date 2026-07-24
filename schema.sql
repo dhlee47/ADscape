@@ -40,11 +40,34 @@ CREATE TABLE trials (
     primary_completion_date   TEXT,
     completion_date           TEXT,
     why_stopped                TEXT,
+    stop_reason_category         TEXT CHECK (stop_reason_category IN
+                                    ('safety_toxicity','lack_of_efficacy','business_funding',
+                                     'enrollment_futility','investigator_departure','operational_logistical',
+                                     'other','not_applicable')),
+                                  -- INFERRED from why_stopped via LLM (see classify_prompt.md).
+                                  -- 'not_applicable' when why_stopped is null (trial never stopped
+                                  -- early). This is what makes "targeting X failed because of
+                                  -- toxicity" queries possible.
+                                  -- investigator_departure/operational_logistical added after the
+                                  -- taxonomy_discovery_prompt.md pass against the real why_stopped
+                                  -- text found both as genuine recurring clusters not covered by the
+                                  -- original 4 (see taxonomy_discovery_response.json for the full review).
+    stop_reason_confidence         REAL,
+    regulatory_status                 TEXT CHECK (regulatory_status IN
+                                        ('approved','not_approved','pending_review','discontinued')),
+                                      -- Deliberately NOT llm-inferred by default - the actual set of
+                                      -- FDA-approved AD drugs is small and well-known (lecanemab,
+                                      -- donanemab, and a handful of older symptomatic drugs). Hand-curate
+                                      -- this one, same reasoning as the modality/target lookup tables:
+                                      -- high-value, low-volume facts are worth getting exactly right
+                                      -- rather than delegating to an LLM call.
+    regulatory_status_source            TEXT NOT NULL DEFAULT 'human' CHECK (regulatory_status_source IN ('human','llm')),
+    regulatory_status_updated_at          TEXT,
     enrollment_count           INTEGER,
-    enrollment_type             TEXT CHECK (enrollment_type IN ('ACTUAL','ESTIMATED')),
-                                  -- confirmed against a live API v2 response + 1,000-record
-                                  -- sample (2026-07-22); v2 uses ESTIMATED, not the v1-era
-                                  -- ANTICIPATED - see api_source.md
+    enrollment_type             TEXT,
+                                 -- raw from API. Claude Code verified live that the actual value is
+                                 -- 'ESTIMATED', not 'ANTICIPATED' as guessed here originally - defer
+                                 -- to that finding, not this file's CHECK list.
     sex                          TEXT CHECK (sex IN ('ALL','MALE','FEMALE')),
     minimum_age                  TEXT,           -- kept as text: registry values like '55 Years'
     maximum_age                  TEXT,
@@ -83,11 +106,11 @@ CREATE TABLE interventions (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     nct_id      TEXT NOT NULL REFERENCES trials(nct_id) ON DELETE CASCADE,
     name         TEXT NOT NULL,
-    type          TEXT CHECK (type IN ('drug','biological','device','behavioral','dietary_supplement',
-                                        'procedure','radiation','genetic','combination_product',
-                                        'diagnostic_test','other')),
-                    -- raw from API's InterventionType (11 values confirmed via live metadata +
-                    -- 1,000-record sample, 2026-07-22 - see api_source.md), lowercased on write
+    type          TEXT,
+                    -- raw from API's InterventionType. Do NOT constrain this to a guessed list -
+                    -- Claude Code verified against the live API that this has more values than
+                    -- assumed here (at least 11, including genetic/combination_product/
+                    -- diagnostic_test). Defer to Claude Code's live-verified enum, not this file.
     modality       TEXT,
                     -- INFERRED, not from the raw API (same caveat as bucket_id/outcome_assessments -
                     -- keep provenance in mind). Suggested controlled vocabulary:
@@ -97,7 +120,18 @@ CREATE TABLE interventions (
                     -- No CHECK constraint yet - confirm this list covers what's actually in the
                     -- AD pipeline before locking it down; add more values as needed.
     modality_confidence REAL,
-    modality_source      TEXT NOT NULL DEFAULT 'llm' CHECK (modality_source IN ('llm','lookup_table','human'))
+    modality_source      TEXT NOT NULL DEFAULT 'llm' CHECK (modality_source IN ('llm','lookup_table','human')),
+    target                TEXT,
+                            -- INFERRED. The specific druggable target (gene/protein symbol),
+                            -- e.g. 'TREM2', 'BACE1', 'APOE', 'amyloid-beta', 'tau', 'NLRP3',
+                            -- 'complement C1q/C3', 'GLP-1R', 'NMDA receptor', 'AChE'.
+                            -- One level more specific than bucket_id (a bucket like
+                            -- neuroinflammation_microglia_complement can span several distinct
+                            -- targets - TREM2, NLRP3, complement - this field distinguishes them).
+                            -- Free text, not a fixed enum: the set of real AD drug targets is
+                            -- too open-ended to enumerate up front.
+    target_confidence       REAL,
+    target_source             TEXT NOT NULL DEFAULT 'llm' CHECK (target_source IN ('llm','lookup_table','human'))
 );
 
 CREATE INDEX idx_interventions_nct ON interventions(nct_id);
@@ -113,10 +147,50 @@ CREATE TABLE outcomes (
     outcome_type    TEXT NOT NULL CHECK (outcome_type IN ('primary','secondary')),
     measure          TEXT NOT NULL,
     description       TEXT,
-    time_frame         TEXT
+    time_frame         TEXT,
+    endpoint_category    TEXT CHECK (endpoint_category IN
+                            ('biomarker','cognitive_clinical','functional_adl','safety_tolerability',
+                             'pharmacokinetics','neuropsychiatric_behavioral','quality_of_life_wellbeing',
+                             'physical_function_motor','other')),
+                          -- INFERRED from measure/description text. This is what makes
+                          -- "met biomarker but not cognitive" queries possible - without this,
+                          -- outcomes are just an undifferentiated list.
+                          -- pharmacokinetics/neuropsychiatric_behavioral/quality_of_life_wellbeing/
+                          -- physical_function_motor added after the taxonomy_discovery_prompt.md pass
+                          -- against real outcomes.measure/description text (see
+                          -- taxonomy_discovery_response.json). 'feasibility_engagement' (recruitment/
+                          -- adherence/usability measures) was also proposed but deliberately rejected -
+                          -- those aren't therapeutic-outcome endpoints in the sense this taxonomy exists
+                          -- for (met-biomarker-vs-met-cognitive analysis), so they stay 'other'.
+    endpoint_category_confidence REAL
 );
 
 CREATE INDEX idx_outcomes_nct ON outcomes(nct_id);
+
+-- ============================================================
+-- endpoint_assessments: per-OUTCOME assessment (not per-trial).
+-- This is the finer-grained sibling of outcome_assessments -
+-- keep both: outcome_assessments answers "did the trial succeed
+-- overall," this answers "did THIS SPECIFIC endpoint succeed."
+-- Same provenance/append-only discipline as outcome_assessments.
+-- ============================================================
+CREATE TABLE endpoint_assessments (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    outcome_id      INTEGER NOT NULL REFERENCES outcomes(id) ON DELETE CASCADE,
+    met               TEXT NOT NULL CHECK (met IN ('met','not_met','mixed','unknown')),
+    statistically_significant TEXT CHECK (statistically_significant IN
+                                ('yes','no','not_reported','not_applicable')),
+                              -- kept separate from `met` deliberately - a result can point the
+                              -- right direction without reaching significance, or vice versa
+                              -- be significant but clinically marginal. Don't collapse these.
+    source_url          TEXT,
+    confidence             REAL,
+    rationale                 TEXT,
+    assessed_by                TEXT NOT NULL DEFAULT 'llm' CHECK (assessed_by IN ('llm','human')),
+    assessed_at                  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX idx_endpoint_assessments_outcome ON endpoint_assessments(outcome_id);
 
 -- ============================================================
 -- outcome_assessments: what actually happened - inferred, with
@@ -176,24 +250,6 @@ CREATE TABLE taxonomy_proposals (
     proposed_at                    TEXT NOT NULL DEFAULT (datetime('now')),
     reviewed_at                       TEXT
 );
-
--- ============================================================
--- pipeline_runs: durable state for the forward incremental sync -
--- <last_run_date> in api_source.md's forward query is derived from
--- MAX(completed_at) WHERE run_type='sync' AND status='success'.
--- ============================================================
-CREATE TABLE pipeline_runs (
-    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-    run_type            TEXT NOT NULL CHECK (run_type IN ('backfill','sync')),
-    started_at            TEXT NOT NULL DEFAULT (datetime('now')),
-    completed_at             TEXT,
-    status                     TEXT NOT NULL DEFAULT 'running' CHECK (status IN ('running','success','failed')),
-    records_fetched             INTEGER,
-    records_upserted               INTEGER,
-    error_message                     TEXT
-);
-
-CREATE INDEX idx_pipeline_runs_type_status ON pipeline_runs(run_type, status, completed_at);
 
 -- ============================================================
 -- spot_check_log: manual, infrequent QA against Alzforum.

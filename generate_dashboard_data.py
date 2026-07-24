@@ -28,6 +28,14 @@ BUCKET_SHORT_LABELS = {
     "synaptic_neurotransmitter": "Synaptic/neurotransmitter",
     "regenerative_neurotrophic": "Regenerative/neurotrophic",
     "unclassified": "Unclassified",
+    # accepted curator_agent.py proposals (taxonomy.json v0.1.1-0.1.4) - see
+    # review_proposal.py. mechanism_buckets.description is available for these
+    # too but is the full candidate_bucket sentence, same length problem as
+    # the original seed buckets above.
+    "metabolic_insulin_glucose_signaling": "Metabolic/insulin-glucose signaling",
+    "ketone_metabolic_substrate": "Ketone/MCT metabolic substrate",
+    "senolytic_cellular_senescence": "Senolytics (cellular senescence)",
+    "pde9_cgmp_signaling": "PDE9/cGMP signaling",
 }
 
 
@@ -45,6 +53,16 @@ def phase_label(raw):
 
 
 def build_landscape(conn):
+    """Per dashboard_changes_v1.md: landscape.html now needs a client-side
+    status filter that cascades to every chart/table on the page, plus
+    hover breakdowns by intervention name and by mechanism bucket. None of
+    that is achievable from pre-aggregated GROUP BY rows (the v1 shape) once
+    filtering has to recompute every chart in-browser - so this exports one
+    row per trial instead, and every chart is now computed client-side in
+    landscape.html from that array. This is a deliberate data-export change
+    despite the spec's "no new SQL queries... unless noted otherwise" line;
+    see ASSUMPTIONS.md for why it was unavoidable.
+    """
     total_trials = conn.execute("SELECT COUNT(*) AS c FROM trials").fetchone()["c"]
 
     last_sync_row = conn.execute(
@@ -59,94 +77,69 @@ def build_landscape(conn):
         ).fetchall()
     ]
 
-    by_mechanism = [
-        {
-            "bucket_id": r["bucket_id"] or "__unclassified_pending__",
-            "label": bucket_label(r["bucket_id"]),
-            "count": r["c"],
-        }
+    interventions_by_trial = defaultdict(list)
+    for r in conn.execute("SELECT nct_id, name, target FROM interventions WHERE name IS NOT NULL"):
+        # target is null until classify_target.py has run for this name; the
+        # frontend treats null/missing the same as the literal string 'unknown'
+        interventions_by_trial[r["nct_id"]].append({"name": r["name"], "target": r["target"]})
+
+    lead_sponsor_by_trial = {}
+    for r in conn.execute("SELECT nct_id, name FROM sponsors WHERE role = 'lead'"):
+        # a trial can technically have >1 row tagged 'lead' if the registry data is
+        # inconsistent - keep the first one encountered rather than erroring
+        lead_sponsor_by_trial.setdefault(r["nct_id"], r["name"])
+
+    trials = []
+    for t in conn.execute(
+        "SELECT nct_id, brief_title, overall_status, bucket_id, phase, start_date, stop_reason_category "
+        "FROM trials"
+    ).fetchall():
+        year = t["start_date"][:4] if t["start_date"] and len(t["start_date"]) >= 4 and t["start_date"][:4].isdigit() else None
+        trials.append(
+            {
+                "nct_id": t["nct_id"],
+                "brief_title": t["brief_title"],
+                "status": t["overall_status"] or "UNKNOWN",
+                "bucket_id": t["bucket_id"] or "__unclassified_pending__",
+                "bucket_label": bucket_label(t["bucket_id"]),
+                "phase_raw": t["phase"],
+                "phase_label": phase_label(t["phase"]),
+                "start_year": year,
+                "interventions": interventions_by_trial.get(t["nct_id"], []),
+                "lead_sponsor": lead_sponsor_by_trial.get(t["nct_id"]),
+                # null until the stop-reason classification pass runs (blocked on
+                # taxonomy_discovery_prompt.md as of this export - see ASSUMPTIONS.md)
+                "stop_reason_category": t["stop_reason_category"],
+            }
+        )
+
+    # One row per outcome, with its latest endpoint_assessments.met (if any) -
+    # "Endpoint outcomes by category" needs this joined against trials.bucket_id
+    # client-side. endpoint_category will be null and outcomes_met will have no
+    # rows with a non-null `met` until their respective classification/assessment
+    # passes run - exported now anyway per outcomes_schema_and_dashboard.md's own
+    # instruction to build the chart ahead of the data existing.
+    outcomes_export = [
+        {"nct_id": r["nct_id"], "endpoint_category": r["endpoint_category"], "met": r["met"]}
         for r in conn.execute(
             """
-            SELECT t.bucket_id, COUNT(*) AS c
-            FROM trials t
-            GROUP BY t.bucket_id
-            ORDER BY c DESC
+            SELECT o.nct_id, o.endpoint_category, latest.met
+            FROM outcomes o
+            LEFT JOIN (
+                SELECT outcome_id, met,
+                       ROW_NUMBER() OVER (PARTITION BY outcome_id ORDER BY assessed_at DESC) AS rn
+                FROM endpoint_assessments
+            ) latest ON latest.outcome_id = o.id AND latest.rn = 1
             """
         ).fetchall()
     ]
-
-    phase_counts = defaultdict(int)
-    for r in conn.execute("SELECT phase, COUNT(*) AS c FROM trials GROUP BY phase").fetchall():
-        phase_counts[phase_label(r["phase"])] += r["c"]
-    by_phase = [{"phase": k, "count": v} for k, v in sorted(phase_counts.items(), key=lambda kv: -kv[1])]
-
-    # trials over time: one series per bucket_id, keyed by start_date year
-    rows = conn.execute(
-        """
-        SELECT substr(t.start_date, 1, 4) AS year, t.bucket_id
-        FROM trials t
-        WHERE t.start_date IS NOT NULL AND length(t.start_date) >= 4
-        """
-    ).fetchall()
-    years = sorted({r["year"] for r in rows if r["year"] and r["year"].isdigit()})
-    series_counts = defaultdict(lambda: defaultdict(int))
-    series_labels = {}
-    for r in rows:
-        y = r["year"]
-        if not y or not y.isdigit():
-            continue
-        bucket_key = r["bucket_id"] or "__unclassified_pending__"
-        series_labels[bucket_key] = bucket_label(r["bucket_id"])
-        series_counts[bucket_key][y] += 1
-    trials_over_time = {
-        "years": years,
-        "series": [
-            {
-                "bucket_id": bucket_key,
-                "label": series_labels[bucket_key],
-                "data": [series_counts[bucket_key].get(y, 0) for y in years],
-            }
-            for bucket_key in sorted(series_labels, key=lambda k: -sum(series_counts[k].values()))
-        ],
-    }
-
-    sponsor_rows = conn.execute(
-        """
-        SELECT s.name, COUNT(DISTINCT s.nct_id) AS c
-        FROM sponsors s
-        WHERE s.role = 'lead'
-        GROUP BY s.name
-        ORDER BY c DESC
-        LIMIT 15
-        """
-    ).fetchall()
-    top_sponsors = []
-    for r in sponsor_rows:
-        bucket_rows = conn.execute(
-            """
-            SELECT DISTINCT t.bucket_id
-            FROM sponsors s
-            JOIN trials t ON t.nct_id = s.nct_id
-            WHERE s.role = 'lead' AND s.name = ?
-            """,
-            (r["name"],),
-        ).fetchall()
-        top_sponsors.append(
-            {
-                "name": r["name"],
-                "count": r["c"],
-                "buckets": sorted(bucket_label(b["bucket_id"]) for b in bucket_rows),
-            }
-        )
 
     return {
         "total_trials": total_trials,
         "last_sync": last_sync,
         "status_breakdown": status_breakdown,
-        "by_mechanism": by_mechanism,
-        "by_phase": by_phase,
-        "trials_over_time": trials_over_time,
-        "top_sponsors": top_sponsors,
+        "outcomes": outcomes_export,
+        "trials": trials,
     }
 
 

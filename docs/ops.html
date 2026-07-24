@@ -8,7 +8,10 @@
 </head>
 <body>
 <header class="top">
-  <h1>ADscape</h1>
+  <div class="brandwrap">
+    <h1>ADscape</h1>
+    <span class="tagline">is the pipeline behaving? check here first</span>
+  </div>
   <nav>
     <a href="landscape.html">Landscape</a>
     <a href="ops.html" class="active">Pipeline Ops</a>
@@ -18,30 +21,35 @@
   <div class="stat-row" id="stat-row"></div>
 
   <section class="card">
+    <span class="eyebrow">Sync status</span>
     <h2>Recent pipeline runs</h2>
     <p class="subtitle">Backfill and incremental sync runs, most recent first.</p>
     <div id="table-runs"></div>
   </section>
 
   <section class="card">
+    <span class="eyebrow">Review queue</span>
     <h2>Curator proposals pending review</h2>
     <p class="subtitle">The single most actionable thing on this page — a non-empty table here means something needs your judgment call.</p>
     <div id="table-proposals"></div>
   </section>
 
   <section class="card">
+    <span class="eyebrow">Spot-check</span>
     <h2>Low-confidence classifications needing spot-check</h2>
     <p class="subtitle">Confidence 0.4–0.7, the "flagged" tier from classify_prompt.md's own routing logic. Sorted shakiest-first.</p>
     <div id="table-lowconf"></div>
   </section>
 
   <section class="card">
+    <span class="eyebrow">Watchlist</span>
     <h2>Curator watchlist</h2>
     <p class="subtitle">Entities accumulating toward the curator agent's recurrence threshold — not yet a formal proposal.</p>
     <div id="table-watchlist"></div>
   </section>
 
   <section class="card">
+    <span class="eyebrow">QA log</span>
     <h2>Spot-check history</h2>
     <p class="subtitle">Manual QA against Alzforum (see spot_check_eval.md). Empty until you've run that process at least once — expected, not a bug.</p>
     <div class="chart-wrap" id="spotcheck-chart-wrap" style="height: 220px;"><canvas id="chart-spotcheck"></canvas></div>
@@ -161,7 +169,7 @@
       },
       options: {
         indexAxis: "y",
-        plugins: { legend: { display: false } },
+        plugins: { legend: { display: false }, tooltip: darkTooltipTheme() },
         scales: {
           x: { beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
           y: { grid: { display: false } },
