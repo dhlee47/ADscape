@@ -23,72 +23,47 @@ const BUCKET_FAMILY = {
   // non-pharmacological / catch-all
   unclassified:                           { family: "other", weight: 0 },
   ketone_metabolic_substrate:             { family: "other", weight: 1 },
-  __unclassified_pending__:               { family: "other", weight: 2 },
 };
 
 // Each anchor validated as a 3-slot categorical set against the dark surface:
-//   node validate_palette.js "#0fa8a3,#c98500,#9573e0" --mode dark --surface "#101517"
+//   node validate_palette.js "#0fa8a3,#b26e00,#9573e0" --mode dark --surface "#101517"
 //   -> ALL CHECKS PASS (lightness band, chroma floor, CVD separation, normal-vision floor, contrast)
+// (small_molecule anchor is #b26e00, not the page accent's #c98500 - see
+// FAMILY_RAMPS below for why.)
 const FAMILY_ANCHOR = {
   biologic: "#0fa8a3",
-  small_molecule: "#c98500",
+  small_molecule: "#b26e00",
   other: "#9573e0",
 };
-const FAMILY_LIGHTNESS_STEP = 0.055; // per weight step, within-family only (not re-validated
-                                      // against the categorical CVD band past the anchor - a
-                                      // lighter tint of the same hue doesn't reintroduce
-                                      // cross-hue confusion, it's a sequential tint, not a new color)
-const FAMILY_LIGHTNESS_CEILING = 0.82;
 
-function hexToHsl(hex) {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h, s;
-  const l = (max + min) / 2;
-  if (max === min) { h = s = 0; }
-  else {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      default: h = (r - g) / d + 4;
-    }
-    h /= 6;
-  }
-  return [h * 360, s, l];
-}
-function hslToHex(h, s, l) {
-  h /= 360;
-  const hue2rgb = (p, q, t) => {
-    if (t < 0) t += 1;
-    if (t > 1) t -= 1;
-    if (t < 1 / 6) return p + (q - p) * 6 * t;
-    if (t < 1 / 2) return q;
-    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-    return p;
-  };
-  let r, g, b;
-  if (s === 0) { r = g = b = l; }
-  else {
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    const p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1 / 3);
-    g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1 / 3);
-  }
-  const toHex = (v) => Math.round(v * 255).toString(16).padStart(2, "0");
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-}
+// Per-family lightness ramp (weight 0 = anchor, increasing weight = lighter
+// tint of the same hue), hardcoded rather than computed at runtime - the old
+// runtime HSL-lightening scheme (fixed +0.055 per step, capped at L=0.82)
+// produced steps as close as 0.018 apart for the 6-member small_molecule
+// family, i.e. adjacent buckets read as nearly the same color. Regenerated
+// per family in OKLCH and validated as an ordinal ramp
+// (dashboard_changes_v4.md #2 - "avoid ... two different blues next to each
+// other" applies within a family too, not just across families):
+//   node validate_palette.js "#0fa8a3,#46bfba,#69d6d1,#8aeee9" --mode dark --surface "#101517" --ordinal
+//   node validate_palette.js "#b26e00,#c3831a,#d29948,#e2af6b,#f1c48b,#ffdbaa" --mode dark --surface "#101517" --ordinal
+//   node validate_palette.js "#9573e0,#ab8cf5" --mode dark --surface "#101517" --ordinal
+//   -> ALL CHECKS PASS (all adjacent gaps >= the 0.06 OKLCH ΔL floor)
+// small_molecule's anchor had to drop from #c98500 (L=0.670) to #b26e00
+// (L=0.598) to fit: with 6 members needing >=0.06 apart, starting at 0.670
+// forces the lightest step past OKLCH L~0.95, where this hue desaturates
+// toward white faster than the gap requirement can track - verified no
+// chroma-taper schedule closes that last gap from a 0.670 start.
+const FAMILY_RAMPS = {
+  biologic: ["#0fa8a3", "#46bfba", "#69d6d1", "#8aeee9"],
+  small_molecule: ["#b26e00", "#c3831a", "#d29948", "#e2af6b", "#f1c48b", "#ffdbaa"],
+  other: ["#9573e0", "#ab8cf5"],
+};
 
 function colorForBucket(bucketId) {
   const meta = BUCKET_FAMILY[bucketId];
   if (!meta) return mutedColor();
-  const [h, s, l] = hexToHsl(FAMILY_ANCHOR[meta.family]);
-  const lightened = Math.min(l + meta.weight * FAMILY_LIGHTNESS_STEP, FAMILY_LIGHTNESS_CEILING);
-  return hslToHex(h, s, lightened);
+  const ramp = FAMILY_RAMPS[meta.family];
+  return ramp[meta.weight] || ramp[ramp.length - 1];
 }
 
 function mutedColor() {
@@ -117,12 +92,13 @@ const BUCKET_CATALOG = [
   { bucket_id: "regenerative_neurotrophic", label: "Regenerative/neurotrophic" },
   { bucket_id: "unclassified", label: "Unclassified" },
 ];
-// Not in the catalog above on purpose: a "not yet classified" pending state
-// (bucket_id null - e.g. new trials from a re-sync, before classify.py has
-// run on them) isn't a taxonomy bucket, so it shouldn't show up forever as
-// a "(0 trials: ...)" catalog entry when the pipeline is fully caught up
-// (the normal state). Charts add it dynamically only when actually present.
-const UNCLASSIFIED_PENDING = { bucket_id: "__unclassified_pending__", label: "Not yet classified" };
+// A "not yet classified" pending state (bucket_id null - e.g. new trials
+// from a re-sync, before classify.py has run on them) isn't a taxonomy
+// bucket and has no catalog entry. dashboard_changes_v4.md #1 folds it into
+// the same "N unclassified, not shown above" text as the 'unclassified'
+// bucket on every chart that used to plot it - there's no longer a code
+// path that needs a synthetic bucket_id/color for this state (see git
+// history for the removed UNCLASSIFIED_PENDING sentinel if reviving one).
 
 // Fixed order for trials.stop_reason_category, excluding 'not_applicable'
 // (never charted - outcomes_schema_and_dashboard.md: it's the vast majority

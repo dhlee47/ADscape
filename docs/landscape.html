@@ -31,6 +31,7 @@
   <section class="card">
     <span class="eyebrow">Mechanism</span>
     <h2>Trials by mechanism</h2>
+    <p class="unclassified-caption" id="mechanism-unclassified-caption"></p>
     <p class="subtitle">Log scale. Hover a bar to see which specific compounds make up that bucket.</p>
     <div class="chart-with-panel">
       <div class="chart-col">
@@ -56,6 +57,7 @@
   <section class="card">
     <span class="eyebrow">Over time</span>
     <h2>New trials over time, by mechanism</h2>
+    <p class="unclassified-caption" id="time-unclassified-caption"></p>
     <p class="subtitle">Grouped by trial start-date year. Hover a point for the compounds behind it.</p>
     <div class="chart-wrap tall"><canvas id="chart-time"></canvas></div>
   </section>
@@ -63,7 +65,8 @@
   <section class="card">
     <span class="eyebrow">Early stops</span>
     <h2>Stop reasons by mechanism</h2>
-    <p class="subtitle">Stacked by why trials that stopped early stopped (excludes trials still running/completed normally, and any not-yet-categorized stop reason). The number above each bar is that bucket's total trial count, for scale against the much smaller stopped-early counts. Hover a segment for the actual trials.</p>
+    <p class="unclassified-caption" id="stopreasons-unclassified-caption"></p>
+    <p class="subtitle">Stacked by why trials that stopped early stopped (excludes trials still running/completed normally, and any not-yet-categorized stop reason). Each segment is sized as a % of that bucket's stopped-early trials, with its raw count labeled inside it. The number above each bar is that bucket's total trial count, for scale against the much smaller stopped-early counts. Hover a segment for the actual trials.</p>
     <div class="chart-wrap"><canvas id="chart-stopreasons"></canvas></div>
     <div class="empty-state" id="stopreasons-empty" style="display:none;"></div>
   </section>
@@ -228,21 +231,34 @@
     return top;
   }
 
-  // ---------- mechanism chart (#2 log axis + zero handling, #3 hover) ----------
+  // dashboard_changes_v4.md #1: unclassified (bucket_id null - not yet
+  // classified - or bucket_id 'unclassified' - the taxonomy catch-all) is
+  // dropped from trials-by-mechanism, new-trials-over-time, and stop-reasons
+  // and surfaced as this text line instead. Denominator is always "trials in
+  // the current filter" (the same `trials` array each chart renders from),
+  // so this recomputes on every status-tab toggle exactly like the charts do.
+  function unclassifiedCaption(trials) {
+    if (trials.length === 0) return "";
+    const count = trials.filter((t) => t.bucket_id == null || t.bucket_id === "unclassified").length;
+    if (count === 0) return "";
+    const pct = Math.round((count / trials.length) * 100);
+    return `${fmtInt(count)} additional trial${count === 1 ? "" : "s"} (${pct}%) ${count === 1 ? "is" : "are"} unclassified and not shown above.`;
+  }
+
+  // ---------- mechanism chart (#2 log axis + zero handling, #3 hover, v4#1 unclassified excluded) ----------
   function renderMechanismChart(trials) {
     const counts = new Map();
     for (const t of trials) counts.set(t.bucket_id, (counts.get(t.bucket_id) || 0) + 1);
 
-    const present = bucketCatalog.map((b) => ({ ...b, count: counts.get(b.bucket_id) || 0 }));
+    document.getElementById("mechanism-unclassified-caption").textContent = unclassifiedCaption(trials);
+
+    // 'unclassified' and the null-bucket pending state are both folded into
+    // the caption above now, not plotted as bars.
+    const present = bucketCatalog
+      .filter((b) => b.bucket_id != null && b.bucket_id !== "unclassified")
+      .map((b) => ({ ...b, count: counts.get(b.bucket_id) || 0 }));
     const nonZero = present.filter((b) => b.count > 0).sort((a, b) => b.count - a.count);
     const zero = present.filter((b) => b.count === 0);
-    // pending (bucket_id IS NULL) trials aren't a taxonomy bucket - only show
-    // this bar if it's actually non-empty, never list it as a "zero" entry
-    const pendingCount = counts.get(UNCLASSIFIED_PENDING.bucket_id) || 0;
-    if (pendingCount > 0) {
-      nonZero.push({ ...UNCLASSIFIED_PENDING, count: pendingCount });
-      nonZero.sort((a, b) => b.count - a.count);
-    }
 
     document.getElementById("mechanism-zero-caption").textContent =
       zero.length ? `(0 trials: ${zero.map((b) => b.label).join(", ")})` : "";
@@ -337,8 +353,10 @@
     });
   }
 
-  // ---------- time series chart (#5: log axis, hover compound list) ----------
+  // ---------- time series chart (#5: log axis, hover compound list; v4#1 unclassified excluded) ----------
   function renderTimeChart(trials) {
+    document.getElementById("time-unclassified-caption").textContent = unclassifiedCaption(trials);
+
     const withYear = trials.filter((t) => t.start_year);
     const years = [...new Set(withYear.map((t) => t.start_year))].sort();
     const byBucketYear = new Map(); // bucket_id -> year -> count
@@ -361,9 +379,13 @@
       }
     }
 
-    const bucketIds = [...byBucketYear.keys()].sort(
-      (a, b) => [...byBucketYear.get(b).values()].reduce((s, c) => s + c, 0) - [...byBucketYear.get(a).values()].reduce((s, c) => s + c, 0)
-    );
+    // v4#1: unclassified (null bucket_id or 'unclassified') isn't plotted as
+    // its own line - it's in the caption above instead.
+    const bucketIds = [...byBucketYear.keys()]
+      .filter((bid) => bid != null && bid !== "unclassified")
+      .sort(
+        (a, b) => [...byBucketYear.get(b).values()].reduce((s, c) => s + c, 0) - [...byBucketYear.get(a).values()].reduce((s, c) => s + c, 0)
+      );
 
     if (charts.time) charts.time.destroy();
     charts.time = new Chart(document.getElementById("chart-time"), {
@@ -442,12 +464,15 @@
     };
   }
 
-  // ---------- stop reasons by mechanism ----------
+  // ---------- stop reasons by mechanism (v4#1 unclassified excluded, v4#3 % axis + count labels) ----------
   function renderStopReasonsChart(trials) {
+    document.getElementById("stopreasons-unclassified-caption").textContent = unclassifiedCaption(trials);
+
     const totalByBucket = new Map();
     for (const t of trials) totalByBucket.set(t.bucket_id, (totalByBucket.get(t.bucket_id) || 0) + 1);
 
     const bucketsInOrder = bucketCatalog
+      .filter((b) => b.bucket_id != null && b.bucket_id !== "unclassified")
       .map((b) => ({ ...b, total: totalByBucket.get(b.bucket_id) || 0 }))
       .filter((b) => b.total > 0)
       .sort((a, b) => b.total - a.total);
@@ -478,18 +503,66 @@
     emptyEl.style.display = "none";
 
     const bucketIds = bucketsInOrder.map((b) => b.bucket_id);
-    const datasets = STOP_REASON_CATALOG.map((reason) => ({
-      label: reason.label,
-      stop_reason_id: reason.id,
-      data: bucketIds.map((bid) => countsByReasonBucket.get(reason.id)?.get(bid) || 0),
-      backgroundColor: colorForStopReason(reason.id),
-      borderRadius: 2,
-    }));
+
+    // v4#3 denominator: trials in this bucket with a real (categorized)
+    // stop reason - i.e. the sum of this bucket's own segments, not
+    // literally status === 'TERMINATED'. stop_reason_category is also
+    // populated on WITHDRAWN and SUSPENDED trials in this data, and using
+    // TERMINATED-only as the denominator would push some buckets' segments
+    // past 100%, contradicting the "segments sum to 100%" requirement.
+    const stoppedEarlyByBucket = new Map();
+    for (const [, byBucket] of countsByReasonBucket) {
+      for (const [bid, count] of byBucket) {
+        stoppedEarlyByBucket.set(bid, (stoppedEarlyByBucket.get(bid) || 0) + count);
+      }
+    }
+
+    const datasets = STOP_REASON_CATALOG.map((reason) => {
+      const counts = bucketIds.map((bid) => countsByReasonBucket.get(reason.id)?.get(bid) || 0);
+      return {
+        label: reason.label,
+        stop_reason_id: reason.id,
+        data: counts.map((count, i) => {
+          const denom = stoppedEarlyByBucket.get(bucketIds[i]) || 0;
+          return denom > 0 ? (count / denom) * 100 : 0;
+        }),
+        counts, // raw counts, kept alongside the plotted % (v4#3: label stays visible)
+        backgroundColor: colorForStopReason(reason.id),
+        borderRadius: 2,
+      };
+    });
 
     charts.stopreasons = new Chart(document.getElementById("chart-stopreasons"), {
       type: "bar",
       data: { labels: bucketsInOrder.map((b) => b.label), datasets },
-      plugins: [topLabelPlugin("stopReasonTotals", (i) => fmtInt(bucketsInOrder[i]?.total))],
+      plugins: [
+        topLabelPlugin("stopReasonTotals", (i) => fmtInt(bucketsInOrder[i]?.total)),
+        // v4#3: raw count inside each segment, tall enough to hold it -
+        // selective direct labels, not a number crammed into every sliver
+        {
+          id: "stopReasonSegmentCounts",
+          afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            ctx.save();
+            ctx.fillStyle = "#fff";
+            ctx.font = "600 10px Inter, system-ui, -apple-system, 'Segoe UI', sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            chart.data.datasets.forEach((ds, di) => {
+              const meta = chart.getDatasetMeta(di);
+              if (meta.hidden) return;
+              meta.data.forEach((bar, i) => {
+                const count = ds.counts[i];
+                if (!count) return;
+                const height = bar.base - bar.y;
+                if (height < 14) return;
+                ctx.fillText(fmtInt(count), bar.x, (bar.y + bar.base) / 2);
+              });
+            });
+            ctx.restore();
+          },
+        },
+      ],
       options: {
         plugins: {
           legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true } },
@@ -502,14 +575,15 @@
                 if (list.length === 0) return `${ctx.dataset.label}: 0`;
                 const shown = list.slice(0, 5).map((t) => `${t.nct_id} - ${t.brief_title}`);
                 const more = list.length - shown.length;
-                return [`${ctx.dataset.label}: ${list.length}`, ...shown, ...(more > 0 ? [`+${more} more`] : [])];
+                const pct = Math.round(ctx.parsed.y);
+                return [`${ctx.dataset.label}: ${list.length} (${pct}%)`, ...shown, ...(more > 0 ? [`+${more} more`] : [])];
               },
             },
           },
         },
         scales: {
           x: { stacked: true, grid: { display: false }, ticks: { autoSkip: false, maxRotation: 40, minRotation: 20 } },
-          y: { stacked: true, beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
+          y: { stacked: true, beginAtZero: true, max: 100, grid: { color: grid }, ticks: { callback: (v) => v + "%" } },
         },
       },
     });
@@ -567,6 +641,30 @@
       .map((b) => ({ ...b, ...stats.get(b.bucket_id) }))
       .sort((a, b) => (b.biomarker.total + b.cognitive_clinical.total) - (a.biomarker.total + a.cognitive_clinical.total));
 
+    // v4#4: rescale the y-axis to spread out the actual data instead of the
+    // fixed 0-100 range, which compresses everything toward one end once
+    // real values start clustering. Only look at bars with real assessments
+    // (total > 0) - a 0%-because-nothing's-been-assessed-yet bar shouldn't
+    // pull the range down while the backfill (endpoint_backfill_no_api.md)
+    // is still in progress. Falls back to the full 0-100 range when there's
+    // not enough real data yet to make a rescale meaningful.
+    const realValues = [];
+    for (const b of sorted) {
+      if (b.biomarker.total > 0) realValues.push(pct(b.biomarker));
+      if (b.cognitive_clinical.total > 0) realValues.push(pct(b.cognitive_clinical));
+    }
+    let yMin = 0, yMax = 100;
+    if (realValues.length >= 2) {
+      const pad = 10;
+      yMin = Math.max(0, Math.floor(Math.min(...realValues) - pad));
+      yMax = Math.min(100, Math.ceil(Math.max(...realValues) + pad));
+      if (yMax - yMin < 20) { // degenerate/near-identical values - keep a readable band
+        const mid = (yMin + yMax) / 2;
+        yMin = Math.max(0, Math.round(mid - 10));
+        yMax = Math.min(100, Math.round(mid + 10));
+      }
+    }
+
     charts.endpoints = new Chart(document.getElementById("chart-endpoints"), {
       type: "bar",
       data: {
@@ -575,6 +673,7 @@
           {
             label: "Biomarker",
             data: sorted.map((b) => pct(b.biomarker)),
+            met: sorted.map((b) => b.biomarker.met),
             n: sorted.map((b) => b.biomarker.total),
             backgroundColor: colorForBucket("anti_amyloid_immunotherapy"),
             borderRadius: 3,
@@ -582,6 +681,7 @@
           {
             label: "Cognitive/clinical",
             data: sorted.map((b) => pct(b.cognitive_clinical)),
+            met: sorted.map((b) => b.cognitive_clinical.met),
             n: sorted.map((b) => b.cognitive_clinical.total),
             backgroundColor: colorForBucket("synaptic_neurotransmitter"),
             borderRadius: 3,
@@ -597,8 +697,10 @@
           ctx.font = "10px Inter, system-ui, -apple-system, 'Segoe UI', sans-serif";
           ctx.textAlign = "center";
           ctx.textBaseline = "bottom";
+          // v4#4: "x/n" (met/assessed), not "N=n" - the total alone hid
+          // whether met endpoints were common or rare within that total.
           chart.data.datasets.forEach((ds, di) => {
-            chart.getDatasetMeta(di).data.forEach((bar, i) => ctx.fillText(`N=${ds.n[i]}`, bar.x, bar.y - 4));
+            chart.getDatasetMeta(di).data.forEach((bar, i) => ctx.fillText(`${ds.met[i]}/${ds.n[i]}`, bar.x, bar.y - 4));
           });
           ctx.restore();
         },
@@ -609,13 +711,18 @@
           tooltip: {
             ...darkTooltipTheme(),
             callbacks: {
-              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}% met (N=${ctx.dataset.n[ctx.dataIndex]})`,
+              label: (ctx) => {
+                const met = ctx.dataset.met[ctx.dataIndex];
+                const n = ctx.dataset.n[ctx.dataIndex];
+                const kind = ctx.dataset.label === "Biomarker" ? "a biomarker endpoint" : "a cognitive/clinical endpoint";
+                return `${ctx.dataset.label}: ${met}/${n} trials met ${kind} (${ctx.parsed.y}%)`;
+              },
             },
           },
         },
         scales: {
           x: { grid: { display: false } },
-          y: { beginAtZero: true, max: 100, grid: { color: grid }, ticks: { callback: (v) => v + "%" } },
+          y: { min: yMin, max: yMax, grid: { color: grid }, ticks: { callback: (v) => v + "%" } },
         },
       },
     });

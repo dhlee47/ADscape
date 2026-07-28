@@ -160,6 +160,17 @@ section.card h2 {
   font-size: 0.98rem;
   margin: 0 0 4px;
 }
+/* dashboard_changes_v4.md #1: unclassified trials surfaced as text instead
+   of a chart bucket - sits between the title and the subtitle, empty and
+   collapsed (:empty) when the current filter has no unclassified trials */
+.unclassified-caption {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin: 0 0 4px;
+}
+.unclassified-caption:empty {
+  display: none;
+}
 section.card .subtitle {
   font-size: 0.8rem;
   color: var(--text-secondary);
