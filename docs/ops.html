@@ -3,99 +3,112 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ADscape — Pipeline Ops</title>
+<title>Data quality · ADscape</title>
+<meta name="theme-color" content="#13294b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2313294b'/%3E%3Cpath d='M5 18c3-1.4 4.6-7 8.2-7s4.2 4.3 7.2 4.3S24.8 10.5 27 9' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="top">
-  <div class="brandwrap">
-    <h1>ADscape</h1>
-    <span class="tagline">is the pipeline behaving? check here first</span>
+<header class="masthead">
+  <div class="masthead-inner">
+    <a class="brand" href="index.html">
+    <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="7" fill="#13294b"/>
+      <path d="M5 23.5c3.2-1.2 5-4.6 8-4.6s4.4 2.4 7.4 2.4S24.6 18 27 17" fill="none" stroke="#7fa6d9" stroke-width="2" stroke-linecap="round"/>
+      <path d="M5 18c3-1.4 4.6-7 8.2-7s4.2 4.3 7.2 4.3S24.8 10.5 27 9" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+      <span class="brand-name">AD<b>scape</b></span>
+      <span class="brand-desc">Alzheimer's disease clinical trial landscape</span>
+    </a>
+    <nav aria-label="Primary">
+      <a href="landscape.html">Landscape</a>
+      <a href="ops.html" class="active" aria-current="page">Data quality</a>
+    </nav>
   </div>
-  <nav>
-    <a href="landscape.html">Landscape</a>
-    <a href="ops.html" class="active">Pipeline Ops</a>
-  </nav>
 </header>
+
+<div class="page-intro">
+  <h1>Data quality</h1>
+  <p class="lede">How the dataset behind the Landscape view is built and checked: sync history, the review queue for proposed mechanism classes, low-confidence classifications, and manual QA against Alzforum. Check here before relying on Landscape numbers.</p>
+  <div class="meta-line" id="meta-line"></div>
+</div>
+
 <main>
   <div class="stat-row" id="stat-row"></div>
 
   <section class="card">
-    <span class="eyebrow">Sync status</span>
-    <h2>Recent pipeline runs</h2>
-    <p class="subtitle">Backfill and incremental sync runs, most recent first.</p>
+    <span class="fig-label">Sync</span>
+    <h2>Recent data syncs</h2>
+    <p class="subtitle">Full backfills and incremental updates from ClinicalTrials.gov, most recent first.</p>
     <div id="table-runs"></div>
   </section>
 
   <section class="card">
-    <span class="eyebrow">Review queue</span>
-    <h2>Curator proposals pending review</h2>
-    <p class="subtitle">The single most actionable thing on this page — a non-empty table here means something needs your judgment call.</p>
+    <span class="fig-label">Review queue</span>
+    <h2>Proposed new mechanism classes</h2>
+    <p class="subtitle">Classes suggested by the curator agent from patterns in unclassified trials. Nothing changes in the taxonomy until a person accepts a proposal.</p>
     <div id="table-proposals"></div>
   </section>
 
   <section class="card">
-    <span class="eyebrow">Spot-check</span>
-    <h2>Low-confidence classifications needing spot-check</h2>
-    <p class="subtitle">Confidence 0.4–0.7, the "flagged" tier from classify_prompt.md's own routing logic. Sorted shakiest-first.</p>
+    <span class="fig-label">Spot-check</span>
+    <h2>Low-confidence classifications</h2>
+    <p class="subtitle">Trials whose mechanism class was assigned with confidence between 0.4 and 0.7, least confident first. These are the best candidates for manual review.</p>
     <div id="table-lowconf"></div>
   </section>
 
   <section class="card">
-    <span class="eyebrow">Watchlist</span>
-    <h2>Curator watchlist</h2>
-    <p class="subtitle">Entities accumulating toward the curator agent's recurrence threshold — not yet a formal proposal.</p>
+    <span class="fig-label">Watchlist</span>
+    <h2>Emerging targets and mechanisms</h2>
+    <p class="subtitle">Targets or mechanisms that keep appearing in unclassified trials but have not yet reached the threshold for a formal proposal.</p>
     <div id="table-watchlist"></div>
   </section>
 
   <section class="card">
-    <span class="eyebrow">QA log</span>
-    <h2>Spot-check history</h2>
-    <p class="subtitle">Manual QA against Alzforum (see spot_check_eval.md). Empty until you've run that process at least once — expected, not a bug.</p>
+    <span class="fig-label">QA log</span>
+    <h2>Agreement with Alzforum</h2>
+    <p class="subtitle">Results of manual spot-checks comparing ADscape's mechanism and outcome calls against Alzforum's curated database.</p>
     <div class="chart-wrap" id="spotcheck-chart-wrap" style="height: 220px;"><canvas id="chart-spotcheck"></canvas></div>
     <div id="table-spotcheck" style="margin-top: 16px;"></div>
   </section>
 </main>
-<footer class="page-footer">Data as of last <code>generate_dashboard_data.py</code> run.</footer>
+<footer class="page-footer">
+  <div class="inner">
+    <span>ADscape · Source: ClinicalTrials.gov (API v2). Mechanism classes are model-assigned; see Data quality for how they are checked.</span>
+    <span>Not medical or investment advice.</span>
+  </div>
+</footer>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="common.js"></script>
 <script>
 (async function () {
   const data = await loadJSON("data/ops.json");
-  const fonts = chartFontDefaults();
-  Chart.defaults.color = fonts.color;
-  Chart.defaults.font.family = fonts.font.family;
-  Chart.defaults.font.size = fonts.font.size;
+  applyChartDefaults();
   const grid = cssVar("--gridline");
 
   const lastRun = data.recent_runs[0];
   const statRow = document.getElementById("stat-row");
-  statRow.appendChild(el("div", { class: "stat-tile" }, [
-    el("div", { class: "value", text: lastRun ? fmtDateDisplay(lastRun.completed_at || lastRun.started_at) : "—" }),
-    el("div", { class: "label", text: "Last run" }),
-  ]));
-  statRow.appendChild(el("div", { class: "stat-tile" }, [
-    el("div", { class: "value", text: lastRun ? lastRun.status : "—" }),
-    el("div", { class: "label", text: "Last run status" }),
-  ]));
-  statRow.appendChild(el("div", { class: "stat-tile" }, [
-    el("div", { class: "value", text: fmtInt(data.classified_count) }),
-    el("div", { class: "label", text: "Trials classified" }),
-  ]));
-  statRow.appendChild(el("div", { class: "stat-tile" }, [
-    el("div", { class: "value", text: fmtInt(data.unclassified_count) }),
-    el("div", { class: "label", text: "Trials not yet classified" }),
-  ]));
-  statRow.appendChild(el("div", { class: "stat-tile" }, [
-    el("div", { class: "value", text: fmtInt(data.pending_proposals.length) }),
-    el("div", { class: "label", text: "Pending proposals" }),
-  ]));
+  const total = data.classified_count + data.unclassified_count;
+  [
+    [lastRun ? fmtDateDisplay(lastRun.completed_at || lastRun.started_at) : "—", "Last sync", true],
+    [lastRun ? lastRun.status : "—", "Last sync status", true],
+    [fmtInt(data.classified_count), "Trials run through classifier"],
+    [fmtInt(data.unclassified_count), "Awaiting classification"],
+    [fmtInt(data.pending_proposals.length), "Proposals to review"],
+  ].forEach(([value, label, small]) => statRow.appendChild(el("div", { class: "stat-tile" }, [
+    el("div", { class: "label", text: label }),
+    el("div", { class: "value" + (small ? " small" : ""), text: value }),
+  ])));
+  document.getElementById("meta-line").append(
+    el("span", {}, [el("strong", { text: "Trials in database " }), fmtInt(total)]),
+    el("span", {}, [el("strong", { text: "Source " }), "ClinicalTrials.gov"]),
+  );
 
   renderTable(
     document.getElementById("table-runs"),
     [
-      { key: "run_type", label: "Type" },
+      { key: "run_type", label: "Type", render: (r) => (r.run_type || "").replace(/_/g, " ") },
       { key: "status", label: "Status", render: (r) => el("span", { class: `badge ${r.status}`, text: r.status }) },
       { key: "started_at", label: "Started", render: (r) => fmtDateDisplay(r.started_at) },
       { key: "completed_at", label: "Completed", render: (r) => fmtDateDisplay(r.completed_at) },
@@ -110,29 +123,29 @@
   renderTable(
     document.getElementById("table-proposals"),
     [
-      { key: "proposed_at", label: "Proposed", render: (r) => fmtDateDisplay(r.proposed_at) },
-      { key: "bucket", label: "Candidate bucket", render: (r) => {
+      { key: "proposed_at", label: "Proposed", mono: true, render: (r) => fmtDateShort(r.proposed_at) },
+      { key: "bucket", label: "Proposed class", render: (r) => {
           try {
             const b = JSON.parse(r.proposed_bucket_json);
             return `${b.id} — ${b.description}`;
           } catch (e) { return r.proposed_bucket_json; }
         } },
       { key: "rationale", label: "Rationale" },
-      { key: "supporting_items", label: "Supporting items", render: (r) => {
+      { key: "supporting_items", label: "Supporting trials", render: (r) => {
           try { return JSON.parse(r.supporting_items || "[]").join(", ") || "—"; }
           catch (e) { return r.supporting_items || "—"; }
         } },
     ],
     data.pending_proposals,
-    "No proposals pending review — the curator agent hasn't flagged anything requiring a taxonomy change."
+    "No proposals waiting for review."
   );
 
   renderTable(
     document.getElementById("table-lowconf"),
     [
-      { key: "nct_id", label: "NCT ID" },
+      { key: "nct_id", label: "NCT ID", mono: true, render: (r) => el("a", { href: `https://clinicaltrials.gov/study/${r.nct_id}`, target: "_blank", rel: "noopener", text: r.nct_id }) },
       { key: "brief_title", label: "Title" },
-      { key: "bucket_label", label: "Assigned bucket", render: (r) => r.bucket_label || r.bucket_id },
+      { key: "bucket_label", label: "Assigned class", render: (r) => r.bucket_label || r.bucket_id },
       { key: "classification_confidence", label: "Confidence", num: true, render: (r) => r.classification_confidence.toFixed(2) },
       { key: "classification_rationale", label: "Rationale" },
     ],
@@ -143,14 +156,14 @@
   renderTable(
     document.getElementById("table-watchlist"),
     [
-      { key: "entity", label: "Entity" },
-      { key: "item_count", label: "Item count", num: true },
-      { key: "first_seen_at", label: "First seen", render: (r) => fmtDateDisplay(r.first_seen_at) },
-      { key: "last_seen_at", label: "Last seen", render: (r) => fmtDateDisplay(r.last_seen_at) },
+      { key: "entity", label: "Target / mechanism" },
+      { key: "item_count", label: "Trials", num: true },
+      { key: "first_seen_at", label: "First seen", mono: true, render: (r) => fmtDateShort(r.first_seen_at) },
+      { key: "last_seen_at", label: "Last seen", mono: true, render: (r) => fmtDateShort(r.last_seen_at) },
       { key: "note", label: "Note", render: (r) => r.note || "—" },
     ],
     data.watchlist,
-    "Watchlist is empty — the curator agent hasn't been run yet."
+    "Nothing on the watchlist yet."
   );
 
   const agreement = data.spot_check.agreement_counts;
@@ -169,7 +182,7 @@
       },
       options: {
         indexAxis: "y",
-        plugins: { legend: { display: false }, tooltip: darkTooltipTheme() },
+        plugins: { legend: { display: false }, tooltip: tooltipTheme() },
         scales: {
           x: { beginAtZero: true, grid: { color: grid }, ticks: { precision: 0 } },
           y: { grid: { display: false } },
@@ -178,23 +191,24 @@
     });
   } else {
     document.getElementById("spotcheck-chart-wrap").outerHTML =
-      '<div class="empty-state">No spot-check runs logged yet — see spot_check_eval.md for the manual QA process.</div>';
+      '<div class="empty-state">No spot-checks logged yet. Results will appear here after the first manual comparison against Alzforum.</div>';
   }
 
   renderTable(
     document.getElementById("table-spotcheck"),
     [
-      { key: "nct_id", label: "NCT ID" },
+      { key: "nct_id", label: "NCT ID", mono: true, render: (r) => el("a", { href: `https://clinicaltrials.gov/study/${r.nct_id}`, target: "_blank", rel: "noopener", text: r.nct_id }) },
       { key: "bucket_agreement", label: "Bucket agreement", render: (r) => r.bucket_agreement ? el("span", { class: `badge ${r.bucket_agreement}`, text: r.bucket_agreement }) : "—" },
       { key: "outcome_agreement", label: "Outcome agreement", render: (r) => r.outcome_agreement ? el("span", { class: `badge ${r.outcome_agreement}`, text: r.outcome_agreement }) : "—" },
-      { key: "checked_at", label: "Checked", render: (r) => fmtDateDisplay(r.checked_at) },
+      { key: "checked_at", label: "Checked", mono: true, render: (r) => fmtDateShort(r.checked_at) },
       { key: "notes", label: "Notes", render: (r) => r.notes || "—" },
     ],
     data.spot_check.log,
     ""
   );
+  if (!data.spot_check.log || data.spot_check.log.length === 0) document.getElementById("table-spotcheck").innerHTML = "";
 })().catch((err) => {
-  document.querySelector("main").prepend(el("div", { class: "card empty-state", text: "Failed to load dashboard data: " + err.message }));
+  document.querySelector("main").prepend(el("div", { class: "empty-state", text: "Could not load dashboard data: " + err.message }));
 });
 </script>
 </body>

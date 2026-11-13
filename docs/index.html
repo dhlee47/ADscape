@@ -4,33 +4,63 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ADscape</title>
+<meta name="description" content="ADscape maps the Alzheimer's disease clinical trial landscape by mechanism of action, phase, sponsor and outcome.">
+<meta name="theme-color" content="#13294b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2313294b'/%3E%3Cpath d='M5 18c3-1.4 4.6-7 8.2-7s4.2 4.3 7.2 4.3S24.8 10.5 27 9' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="top">
-  <div class="brandwrap">
-    <h1>ADscape</h1>
-    <span class="tagline">a field survey of the Alzheimer's trial landscape</span>
+<header class="masthead">
+  <div class="masthead-inner">
+    <a class="brand" href="index.html">
+    <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="7" fill="#13294b"/>
+      <path d="M5 23.5c3.2-1.2 5-4.6 8-4.6s4.4 2.4 7.4 2.4S24.6 18 27 17" fill="none" stroke="#7fa6d9" stroke-width="2" stroke-linecap="round"/>
+      <path d="M5 18c3-1.4 4.6-7 8.2-7s4.2 4.3 7.2 4.3S24.8 10.5 27 9" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+      <span class="brand-name">AD<b>scape</b></span>
+      <span class="brand-desc">Alzheimer's disease clinical trial landscape</span>
+    </a>
+    <nav aria-label="Primary">
+      <a href="landscape.html">Landscape</a>
+      <a href="ops.html">Data quality</a>
+    </nav>
   </div>
 </header>
+
+<div class="page-intro">
+  <h1>A map of Alzheimer's disease clinical trials</h1>
+  <p class="lede">ADscape tracks Alzheimer's disease studies registered on ClinicalTrials.gov and groups them by mechanism of action, so you can see where the field is investing, what is advancing, and what has stopped.</p>
+</div>
+
 <main>
-  <section class="card">
-    <h2>Alzheimer's disease trial landscape tracker</h2>
-    <p class="subtitle">Two views over the same ClinicalTrials.gov-backed dataset.</p>
-    <table>
-      <tbody>
-        <tr>
-          <td style="width: 220px;"><a href="landscape.html"><strong>Landscape Overview</strong></a></td>
-          <td>Aggregate view of the field — trials by mechanism bucket, phase, sponsor, and time. Use this to scan the state of the science.</td>
-        </tr>
-        <tr>
-          <td><a href="ops.html"><strong>Pipeline Ops</strong></a></td>
-          <td>Operator view of the pipeline itself — sync status, curator proposals awaiting review, low-confidence classifications, and the taxonomy watchlist. Check this before trusting the Landscape numbers.</td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="view-cards">
+    <a class="view-card" href="landscape.html">
+      <span class="fig-label">Explore</span>
+      <h2>Trial landscape</h2>
+      <p>Trials by mechanism class, development phase and start year; why trials stopped early; biomarker vs. clinical endpoints met; and the most active sponsors. Filter everything by trial status.</p>
+      <span class="go">Open landscape →</span>
+    </a>
+    <a class="view-card" href="ops.html">
+      <span class="fig-label">Verify</span>
+      <h2>Data quality</h2>
+      <p>How the dataset is built and checked: sync history, low-confidence classifications, proposed new mechanism classes, and agreement with Alzforum's curated database.</p>
+      <span class="go">Open data quality →</span>
+    </a>
+  </div>
+
+  <section class="about">
+    <h3>Method in brief</h3>
+    <p>Trial records are pulled from the ClinicalTrials.gov API and refreshed incrementally. Each trial is assigned to a mechanism class by a language model using a fixed taxonomy; uncertain calls are flagged for manual review. A separate curator step watches unclassified trials for emerging mechanisms and proposes new classes, which are only added after human review.</p>
+    <p>Manual spot-checks of classifications against <a href="https://www.alzforum.org/therapeutics" target="_blank" rel="noopener">Alzforum Therapeutics</a> are logged on the Data quality page. ClinicalTrials.gov is not exhaustive for non-US studies.</p>
   </section>
 </main>
-<footer class="page-footer">ADscape — static dashboard, rebuilt from <code>adscape.db</code> via <code>generate_dashboard_data.py</code></footer>
+
+<footer class="page-footer">
+  <div class="inner">
+    <span>ADscape · Source: ClinicalTrials.gov (API v2). Mechanism classes are model-assigned; see Data quality for how they are checked.</span>
+    <span>Not medical or investment advice.</span>
+  </div>
+</footer>
 </body>
 </html>

@@ -1,5 +1,7 @@
-// Shared helpers for the ADscape dashboards - dense data-terminal aesthetic,
-// dark mode only (dashboard_aesthetic_revamp.md). Mechanism buckets are
+// Shared helpers for the ADscape dashboards - light "scientific report"
+// brand (see style.css header). All chart colors below are validated against
+// the white figure surface (#ffffff) with the dataviz skill's
+// validate_palette.js. Mechanism buckets are
 // grouped into 3 hand-curated modality families rather than the old 8-slot
 // arbitrary categorical cycle, so chart color carries real meaning. This is
 // a hand-curated mechanism-domain mapping, NOT derived from the raw
@@ -25,39 +27,41 @@ const BUCKET_FAMILY = {
   ketone_metabolic_substrate:             { family: "other", weight: 1 },
 };
 
-// Each anchor validated as a 3-slot categorical set against the dark surface:
-//   node validate_palette.js "#0fa8a3,#b26e00,#9573e0" --mode dark --surface "#101517"
-//   -> ALL CHECKS PASS (lightness band, chroma floor, CVD separation, normal-vision floor, contrast)
-// (small_molecule anchor is #b26e00, not the page accent's #c98500 - see
-// FAMILY_RAMPS below for why.)
+// Modality families, light-mode. Each family is one hue, darkest = most
+// trials. Anchors validated as a 3-slot categorical set:
+//   node validate_palette.js "#006c98,#874300,#6246a0" --mode light --surface "#ffffff"
+//   -> ALL CHECKS PASS
+// and each ramp as an ordinal ramp (>= 0.06 OKLCH ΔL between steps, lightest
+// step >= 2:1 vs surface):
+//   node validate_palette.js "<ramp>" --mode light --surface "#ffffff" --ordinal
+//   -> ALL CHECKS PASS for all three
+// Generated in OKLCH: biologic h235 C.11 L.50+.07n; small_molecule h62
+// C.125 L.46+.063n; other h295 C.14 L.47+.09n.
 const FAMILY_ANCHOR = {
-  biologic: "#0fa8a3",
-  small_molecule: "#b26e00",
-  other: "#9573e0",
+  biologic: "#006c98",
+  small_molecule: "#874300",
+  other: "#6246a0",
+};
+const FAMILY_LABELS = {
+  biologic: "Biologics / immunotherapy",
+  small_molecule: "Small molecule",
+  other: "Other / non-pharmacological",
+};
+const FAMILY_RAMPS = {
+  biologic: ["#006c98", "#2181af", "#3c96c5", "#54acdc"],
+  small_molecule: ["#874300", "#9b5600", "#b0681a", "#c47c33", "#d98f48", "#efa35c"],
+  other: ["#6246a0", "#7c60bd"],
 };
 
-// Per-family lightness ramp (weight 0 = anchor, increasing weight = lighter
-// tint of the same hue), hardcoded rather than computed at runtime - the old
-// runtime HSL-lightening scheme (fixed +0.055 per step, capped at L=0.82)
-// produced steps as close as 0.018 apart for the 6-member small_molecule
-// family, i.e. adjacent buckets read as nearly the same color. Regenerated
-// per family in OKLCH and validated as an ordinal ramp
-// (dashboard_changes_v4.md #2 - "avoid ... two different blues next to each
-// other" applies within a family too, not just across families):
-//   node validate_palette.js "#0fa8a3,#46bfba,#69d6d1,#8aeee9" --mode dark --surface "#101517" --ordinal
-//   node validate_palette.js "#b26e00,#c3831a,#d29948,#e2af6b,#f1c48b,#ffdbaa" --mode dark --surface "#101517" --ordinal
-//   node validate_palette.js "#9573e0,#ab8cf5" --mode dark --surface "#101517" --ordinal
-//   -> ALL CHECKS PASS (all adjacent gaps >= the 0.06 OKLCH ΔL floor)
-// small_molecule's anchor had to drop from #c98500 (L=0.670) to #b26e00
-// (L=0.598) to fit: with 6 members needing >=0.06 apart, starting at 0.670
-// forces the lightest step past OKLCH L~0.95, where this hue desaturates
-// toward white faster than the gap requirement can track - verified no
-// chroma-taper schedule closes that last gap from a 0.670 start.
-const FAMILY_RAMPS = {
-  biologic: ["#0fa8a3", "#46bfba", "#69d6d1", "#8aeee9"],
-  small_molecule: ["#b26e00", "#c3831a", "#d29948", "#e2af6b", "#f1c48b", "#ffdbaa"],
-  other: ["#9573e0", "#ab8cf5"],
-};
+// Mechanism-neutral single-series color (e.g. trials by phase) - brand navy
+// family, deliberately not one of the modality hues so it doesn't imply a
+// mechanism.
+const NEUTRAL_SERIES = "#3a5f9e";
+
+// Endpoint category pair (biomarker vs. cognitive/clinical) - its own
+// dimension, not mechanism colors:
+//   node validate_palette.js "#3a5f9e,#c8623a" --mode light --surface "#ffffff" -> ALL CHECKS PASS
+const ENDPOINT_COLORS = { biomarker: "#3a5f9e", cognitive_clinical: "#c8623a" };
 
 function colorForBucket(bucketId) {
   const meta = BUCKET_FAMILY[bucketId];
@@ -67,16 +71,16 @@ function colorForBucket(bucketId) {
 }
 
 function mutedColor() {
-  return "#6b7a80"; // visible-on-near-black neutral, for "Other"/unmapped fills
+  return "#9aa3af"; // neutral gray for "Other"/unmapped fills
 }
 
 // Generic 8-slot categorical set for ad-hoc breakdowns that aren't mechanism
 // buckets or stop reasons (e.g. the mechanism-chart hover panel's top-8
 // compound/target names - those are arbitrary per-hover, not a fixed
 // taxonomy, so they don't get their own hand-curated family mapping):
-//   node validate_palette.js "#3987e5,#d95926,#199e70,#c98500,#d55181,#008300,#9085e9,#e66767" --mode dark --surface "#101517"
-//   -> ALL CHECKS PASS
-const BREAKDOWN_PALETTE = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"];
+//   node validate_palette.js "#2a78d6,#eb6834,#1baf7a,#eda100,#e87ba4,#008300,#6250d6,#e34948" --mode light --surface "#ffffff"
+//   -> PASS; contrast WARN on 3 slots, relieved by the doughnut's legend + tooltip
+const BREAKDOWN_PALETTE = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"];
 
 // Full bucket catalog (id + short label) - fixed, independent of what's
 // present in the currently-loaded/filtered trial set. Needed so a
@@ -106,13 +110,14 @@ const BUCKET_CATALOG = [
 // from mechanism buckets (different chart, own validated 4-slot set - not
 // drawn from BUCKET_FAMILY's hues, no collision risk since they never appear
 // on the same chart):
-//   node validate_palette.js "#e66767,#3987e5,#d55181,#008300" --mode dark --surface "#101517"
-//   -> ALL CHECKS PASS
+//   node validate_palette.js "#d6453f,#2a78d6,#b8467f,#2b8a3e" --mode light --surface "#ffffff"
+//   -> PASS; CVD WARN 7.9 on magenta/green, relieved by in-segment count
+//   labels, legend and 2px segment gaps
 const STOP_REASON_CATALOG = [
-  { id: "safety_toxicity", label: "Safety/toxicity", color: "#e66767" },
-  { id: "lack_of_efficacy", label: "Lack of efficacy", color: "#3987e5" },
-  { id: "enrollment_futility", label: "Enrollment futility", color: "#d55181" },
-  { id: "business_funding", label: "Business/funding", color: "#008300" },
+  { id: "safety_toxicity", label: "Safety/toxicity", color: "#d6453f" },
+  { id: "lack_of_efficacy", label: "Lack of efficacy", color: "#2a78d6" },
+  { id: "enrollment_futility", label: "Enrollment futility", color: "#b8467f" },
+  { id: "business_funding", label: "Business/funding", color: "#2b8a3e" },
   { id: "other", label: "Other", color: null }, // null => muted, see colorForStopReason
 ];
 function colorForStopReason(id) {
@@ -133,29 +138,44 @@ function cssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
+const CHART_FONT = "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif";
+
 function chartFontDefaults() {
-  // Data-terminal aesthetic is monospace throughout, chart text included -
-  // no separate display face this pass (dashboard_aesthetic_revamp.md).
   return {
     color: cssVar("--text-secondary"),
-    font: { family: "'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace", size: 11 },
+    font: { family: CHART_FONT, size: 12 },
   };
 }
 
-// Chart.js tooltip theming - defaults to a white box regardless of page
-// theme unless explicitly overridden (dashboard_aesthetic_revamp.md
-// "Technical notes"). Spread this into every chart's options.plugins.tooltip.
-function darkTooltipTheme() {
+// Apply brand defaults to Chart.js once per page.
+function applyChartDefaults() {
+  const f = chartFontDefaults();
+  Chart.defaults.color = f.color;
+  Chart.defaults.font.family = f.font.family;
+  Chart.defaults.font.size = f.font.size;
+  Chart.defaults.borderColor = cssVar("--gridline");
+  Chart.defaults.maintainAspectRatio = false;
+}
+
+// Chart.js tooltip theming: dark navy box on the light page, so it reads as
+// an overlay rather than another panel. Spread into options.plugins.tooltip.
+function tooltipTheme() {
   return {
-    backgroundColor: cssVar("--surface-raised"),
-    titleColor: cssVar("--text-primary"),
-    bodyColor: cssVar("--text-secondary"),
-    borderColor: cssVar("--border"),
-    borderWidth: 1,
+    backgroundColor: cssVar("--brand-ink"),
+    titleColor: "#ffffff",
+    bodyColor: "#dfe5ee",
+    borderWidth: 0,
     padding: 10,
-    titleFont: { family: "'JetBrains Mono', ui-monospace, monospace", size: 11, weight: "600" },
-    bodyFont: { family: "'JetBrains Mono', ui-monospace, monospace", size: 11 },
+    cornerRadius: 4,
+    boxPadding: 4,
+    titleFont: { family: CHART_FONT, size: 12, weight: "600" },
+    bodyFont: { family: CHART_FONT, size: 12 },
   };
+}
+
+// Canvas text font helper for custom label plugins.
+function canvasFont(size, weight) {
+  return `${weight || 400} ${size}px ${CHART_FONT}`;
 }
 
 async function loadJSON(path) {
@@ -186,6 +206,13 @@ function fmtDateDisplay(iso) {
   return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
+function fmtDateShort(iso) {
+  if (!iso) return "—";
+  const d = new Date(fmtDate(iso));
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
 function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -199,11 +226,9 @@ function el(tag, attrs = {}, children = []) {
   return node;
 }
 
-// Small muted crosshair icon for breakdown-panel empty states (fix #2 in
-// dashboard_aesthetic_revamp.md - a real placeholder, not blank colored space).
-const HOVER_ICON_SVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-  <circle cx="12" cy="12" r="6"/>
-  <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+// Pointer icon for breakdown-panel empty states.
+const HOVER_ICON_SVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true">
+  <path d="M5 3l6 16 2.5-6.5L20 10z"/>
 </svg>`;
 
 function renderTable(container, columns, rows, emptyMessage) {
@@ -215,7 +240,7 @@ function renderTable(container, columns, rows, emptyMessage) {
   const table = el("table");
   const thead = el("thead");
   const headRow = el("tr");
-  columns.forEach((c) => headRow.appendChild(el("th", { text: c.label })));
+  columns.forEach((c) => headRow.appendChild(el("th", { class: c.num ? "num" : "", text: c.label })));
   thead.appendChild(headRow);
   table.appendChild(thead);
   const tbody = el("tbody");
@@ -223,7 +248,7 @@ function renderTable(container, columns, rows, emptyMessage) {
     const tr = el("tr");
     columns.forEach((c) => {
       const val = c.render ? c.render(row) : row[c.key];
-      const td = el("td", { class: c.num ? "num" : "" });
+      const td = el("td", { class: c.num ? "num" : c.mono ? "mono" : "" });
       if (val instanceof Node) td.appendChild(val);
       else td.textContent = val;
       tr.appendChild(td);
@@ -231,5 +256,7 @@ function renderTable(container, columns, rows, emptyMessage) {
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
-  container.appendChild(table);
+  const scroller = el("div", { class: "table-scroll" });
+  scroller.appendChild(table);
+  container.appendChild(scroller);
 }
